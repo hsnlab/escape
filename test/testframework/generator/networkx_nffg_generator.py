@@ -13,16 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
-import os
 import random
 import string
-import sys
+
+# noinspection PyUnresolvedReferences
+from nffg_lib.nffg import NFFG
 
 from sg_generator import NameGenerator
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             "../../../escape/escape/nffg_lib/")))
-from nffg import NFFG
 
 
 def get_networkx_func (func_name, seed=0, **kwargs):

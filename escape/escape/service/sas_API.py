@@ -28,6 +28,8 @@ from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, AbstractRequestHandler, \
   RequestStatus, RequestScheduler
+from escape.util.api import AbstractAPI, RESTServer, RequestStatus, \
+  RequestScheduler
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
@@ -117,20 +119,6 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
   # Bound function
   API_CALL_RESOURCE = 'api_sas_get_topology'
   API_CALL_REQUEST = 'api_sas_sg_request'
-
-  def __init__ (self, request, client_address, server):
-    """
-    Init.
-
-    :param request: request type
-    :type request: str
-    :param client_address: client address
-    :type client_address: str
-    :param server: server object
-    :type server: :any:`BaseHTTPServer.HTTPServer`
-    :return: None
-    """
-    AbstractRequestHandler.__init__(self, request, client_address, server)
 
   def status (self, params):
     """

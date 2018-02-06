@@ -24,8 +24,8 @@ from threading import Thread, Lock, Timer
 import requests
 from requests import ConnectionError
 
-from testframework.testcases.basic import BasicSuccessfulTestCase, \
-  TrialAndErrorTestCase
+from testframework.testcases.basic import (BasicSuccessfulTestCase,
+                                           TrialAndErrorTestCase)
 
 log = logging.getLogger()
 

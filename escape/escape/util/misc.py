@@ -33,6 +33,8 @@ from subprocess import STDOUT, Popen, PIPE
 VERBOSE = 5
 """Verbose logging level"""
 
+RESTART_VALUE = 42
+
 
 def schedule_as_coop_task (func):
   """
@@ -212,6 +214,22 @@ def quit_with_ok (msg=None, logger=None):
     logger = core.getLogger("core")
   logger.info(msg if msg else "Exiting from ESCAPE...")
   core.quit()
+
+
+def quit_with_code (ret_code, msg=None, logger=None):
+  """
+  Helper function for quitting with an explicit code.
+
+  :return: None
+  """
+  from pox.core import core
+  if isinstance(logger, str):
+    logger = core.getLogger(logger)
+  elif not isinstance(logger, logging.Logger):
+    logger = core.getLogger("core")
+  logger.info(msg if msg else "Exiting from ESCAPE...")
+  core.quit()
+  os._exit(ret_code)
 
 
 def set_global_parameter (name, value):

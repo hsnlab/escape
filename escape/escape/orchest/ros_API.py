@@ -15,6 +15,7 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
+import errno
 import httplib
 import json
 import pprint
@@ -863,6 +864,26 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   # Bound function
   API_CALL_RESOURCE = 'api_ros_get_config'
   API_CALL_REQUEST = 'api_ros_edit_config'
+
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+
+    :param request: request type
+    :type request: str
+    :param client_address: client address
+    :type client_address: str
+    :param server: server object
+    :type server: :any:`BaseHTTPServer.HTTPServer`
+    :return: None
+    """
+    try:
+      AbstractRequestHandler.__init__(self, request, client_address, server)
+    except IOError as e:
+      if e.errno == errno.EPIPE:
+        pass
+      else:
+        raise
 
   def setup (self):
     super(BasicUnifyRequestHandler, self).setup()

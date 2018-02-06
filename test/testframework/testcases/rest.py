@@ -14,7 +14,6 @@
 import httplib
 import logging
 import os
-import sys
 import time
 import urlparse
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -22,16 +21,8 @@ from threading import Thread, Event
 
 import requests
 
-from testframework.testcases.basic import EscapeTestCase, \
-  BasicSuccessfulTestCase
-
-try:
-  from escape.nffg_lib.nffg import NFFG
-except:
-  sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(__file__),
-                 "../../../escape/escape/nffg_lib/")))
-  from nffg import NFFG
+from testframework.testcases.basic import (EscapeTestCase,
+                                           BasicSuccessfulTestCase)
 
 log = logging.getLogger()
 
@@ -159,7 +150,7 @@ class CallbackManager(HTTPServer, Thread):
   def __str__ (self):
     return "%s(address: %s, timeout: %s)" % (self.__class__.__name__,
                                              self.server_address,
-                                             self.timeout)
+                                             self.wait_timeout)
 
   def shutdown (self):
     log.debug("Shutdown %s..." % self)
@@ -304,7 +295,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     :param data: raw request data
     :type data: str
     :param ext: file extension to define request format
-    :type ext: str
+    :type ext: basestring
     :return: request sending was successful or not
     :rtype: bool
     """

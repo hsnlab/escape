@@ -14,7 +14,6 @@
 """
 Contains functions and classes for remote visualization.
 """
-import logging
 import os
 import shutil
 import threading
@@ -33,6 +32,7 @@ from escape.service import LAYER_NAME as SERVICE
 from escape.util.config import CONFIG, PROJECT_ROOT
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
+from escape_logging import LOG_FOLDER
 from pox.core import core
 
 log = core.getLogger("logger")
@@ -185,7 +185,7 @@ class MessageDumper(object):
   Dump messages into file in thread-safe way.
   """
   __metaclass__ = Singleton
-  DIR = "log/trails/"
+  DIR = os.path.join(LOG_FOLDER, "trails/")
   """Default log dir"""
   __lock = threading.Lock()
 
@@ -216,8 +216,8 @@ class MessageDumper(object):
     """
     self.log_dir = self.DIR + time.strftime("%Y%m%d%H%M%S")
     for i in xrange(1, 10):
-      if not os.path.exists(os.path.join(PROJECT_ROOT, self.log_dir)):
-        os.mkdir(os.path.join(PROJECT_ROOT, self.log_dir))
+      if not os.path.exists(self.log_dir):
+        os.mkdir(self.log_dir)
         break
       else:
         self.log_dir += "+"
@@ -231,11 +231,15 @@ class MessageDumper(object):
     :return: None
     """
     log.debug("Remove trails...")
-    for f in os.listdir(os.path.join(PROJECT_ROOT, self.DIR)):
-      if f != ".placeholder" and not f.startswith(time.strftime("%Y%m%d")):
-        # os.remove(os.path.join(PROJECT_ROOT, self.log_dir, f))
-        shutil.rmtree(os.path.join(PROJECT_ROOT, self.DIR, f),
-                      ignore_errors=True)
+    trail_dir = os.path.join(PROJECT_ROOT, self.DIR)
+    if not os.path.exists(trail_dir):
+      os.makedirs(trail_dir)
+    else:
+      for f in os.listdir(trail_dir):
+        if f != ".placeholder" and not f.startswith(time.strftime("%Y%m%d")):
+          # os.remove(os.path.join(PROJECT_ROOT, self.log_dir, f))
+          shutil.rmtree(os.path.join(PROJECT_ROOT, self.DIR, f),
+                        ignore_errors=True)
 
   def dump_to_file (self, data, unique):
     """
@@ -250,10 +254,9 @@ class MessageDumper(object):
     if not isinstance(data, basestring):
       log.error("Data is not str: %s" % type(data))
       return
-    trails = os.path.join(PROJECT_ROOT, self.log_dir)
     date = time.strftime("%Y%m%d%H%M%S")
     cntr = self.increase_cntr()
-    file_path = os.path.join(trails,
+    file_path = os.path.join(self.log_dir,
                              "%s_%03d_%s.log" % (date, cntr, unique))
     if os.path.exists(file_path):
       log.warning("File path exist! %s" % file_path)

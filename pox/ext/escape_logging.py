@@ -43,11 +43,12 @@ FILE_LOGGER_FORMAT = "|%(levelname)s" \
                      "|%(name)s" \
                      "|%(asctime)s" \
                      "|---|%(message)s"
-# Log file name
-LOG_FILE = os.path.realpath(_ext_path + "../log/escape.log")
+
+# Log folder name
+LOG_FOLDER = os.path.realpath(_ext_path + "../log")
 
 
-def setup_logging (test_mode=False, log_file=None, **kw):
+def setup_logging (test_mode=False, log_file=None, log_folder=None, **kwargs):
   """
   Launch and set parameters for logging.
 
@@ -55,12 +56,17 @@ def setup_logging (test_mode=False, log_file=None, **kw):
   :type test_mode: bool
   :param log_file: log file path
   :type log_file: str
-  :param kw: additional parameters for POX's logger
-  :type kw: dict
   :return: None
   """
+  global LOG_FOLDER
+  if log_folder is not None:
+    LOG_FOLDER = log_folder
+  if not os.path.exists(LOG_FOLDER):
+    os.makedirs(LOG_FOLDER)
+  if log_file is None:
+    log_file = os.path.join(LOG_FOLDER, "escape.log")
   # Enable logging in specific logging level
-  level.launch(**kw)
+  level.launch(**kwargs)
   # Launch colorful logging
   color.launch()
   if test_mode:
@@ -76,7 +82,6 @@ def setup_logging (test_mode=False, log_file=None, **kw):
     log.info("Setup logger - formatter: %s, level: %s"
              % (setup_logging.__module__,
                 logging.getLevelName(log.getEffectiveLevel())))
-  log_file = log_file if log_file is not None else LOG_FILE
   if log_file:
     # Define additional logger for logging to file
     pox.log.launch(format=FILE_LOGGER_FORMAT, file=log_file + ',w')

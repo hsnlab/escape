@@ -1,4 +1,5 @@
-# Copyright 2017 Balazs Nemeth
+#!/usr/bin/env bash
+# Copyright 2018 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +12,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             "../../../escape/escape/")))
+RESTART_VALUE=42
+
+function update() {
+    echo "Updating ESCAPE source base..."
+}
+
+while true
+do
+    echo "Received params: $@"
+    python escape.py ${@}
+    ret_value=${?}
+    echo "Received exit code from ESCAPE: $ret_value"
+    if [ ${ret_value} -eq ${RESTART_VALUE} ]
+    then
+        echo ""
+        update
+        echo "Restarting..."
+    else
+        echo "Exit."
+        exit 0
+    fi
+    echo "Restarting ESCAPE..."
+    sleep 2
+done

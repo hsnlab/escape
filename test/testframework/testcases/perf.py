@@ -19,8 +19,8 @@ import time
 
 from testframework.testcases.basic import BasicSuccessfulTestCase
 from testframework.testcases.domain_mock import DomainOrchestratorAPIMocker
-from testframework.testcases.dynamic import DynamicallyGeneratedTestCase, \
-  DynamicTestGenerator
+from testframework.testcases.dynamic import (DynamicallyGeneratedTestCase,
+                                             DynamicTestGenerator)
 
 log = logging.getLogger()
 
