@@ -166,7 +166,7 @@ class AbstractAPI(EventMixin):
     :param name: dependency
     :type name: str
     :return: dependent component object
-    :rtype: :class:`AbstractAPI`
+    :rtype: :any:`AbstractAPI`
     """
     return getattr(self, "_%s_" % name) if name in self.dependencies else None
 
@@ -323,7 +323,7 @@ class RequestCache(object):
     :rtype: str or int
     """
     try:
-      key = nffg.metadata['params']['message-id']
+      key = nffg.id
       self.__cache[key] = RequestStatus(message_id=key,
                                         nffg_id=nffg.id,
                                         status=RequestStatus.INITIATED,
@@ -638,7 +638,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   """Default communication approach"""
   MESSAGE_ID_NAME = "message-id"
 
-  def setup(self):
+  def setup (self):
     BaseHTTPRequestHandler.setup(self)
 
   def do_GET (self):
@@ -1072,7 +1072,7 @@ class APIRequest(object):
   Main container class for scheduling a service request for orchestration
   """
 
-  def __init__ (self, id, layer, function, kwargs):
+  def __init__ (self, id, layer, hook, data, kwargs):
     """
     Init.
 
@@ -1080,17 +1080,18 @@ class APIRequest(object):
     :type id: str or int
     :param layer: layer name
     :type layer: str
-    :param function: main entry point of orchestration
-    :type function: callable
+    :param hook: main entry point of orchestration
+    :type hook: callable
     """
     self.id = id
     self.layer = layer
-    self.function = function
+    self.hook = hook
+    self.data = data
     self.kwargs = kwargs
 
   def __str__ (self):
     return "Request(id: %s, %s  -->  %s, params: %s)" % (
-      self.id, self.layer, self.function, self.kwargs.keys())
+      self.id, self.layer, self.hook.__name__, self.kwargs.keys())
 
 
 class RequestScheduler(threading.Thread):
@@ -1145,7 +1146,7 @@ class RequestScheduler(threading.Thread):
         self.__progress = None
         self.__condition.notify()
 
-  def schedule_request (self, id, layer, function, **kwargs):
+  def schedule_request (self, id, layer, hook, data, **kwargs):
     """
     Schedule a service request with the given data.
 
@@ -1153,27 +1154,28 @@ class RequestScheduler(threading.Thread):
     :type id: str or int
     :param layer: layer name
     :type layer: str
-    :param function: main entry point of orchestration
-    :type function: callable
+    :param hook: main entry point of orchestration
+    :type hook: callable
     :param kwargs: additional params
     :type kwargs: dict
     :return: None
     """
     # Reset request id if it was overwritten with different message-id
     stats.set_request_id(request_id=id)
-    request = APIRequest(id=id,
-                         layer=layer,
-                         function=function,
-                         kwargs=kwargs)
+    data = APIRequest(id=id,
+                      layer=layer,
+                      hook=hook,
+                      data=data,
+                      kwargs=kwargs)
     if not self.__standby:
-      self.__queue.put(request)
+      self.__queue.put(data)
       self.log.info("Schedule request: %s on %s --> %s..." % (id,
                                                               layer,
-                                                              function))
+                                                              hook.__name__))
     else:
       if id == self.__progress:
         self.log.info("Continue service request in standby mode: %s..." % id)
-        self._proceed_API_call(request)
+        self._proceed_API_call(data)
       else:
         self.log.error("Received request: %s is different from request in "
                        "standby: %s" % (id, self.__progress))
@@ -1201,13 +1203,8 @@ class RequestScheduler(threading.Thread):
     """
     self.log.info("Start request processing in coop-task: %s" % request)
     stats.add_measurement_start_entry(stats.TYPE_SCHEDULED, request.id)
-    if core.core.hasComponent(request.layer):
-      layer = core.components[request.layer]
-      if hasattr(layer, request.function):
-        return getattr(layer, request.function)(**request.kwargs)
-      else:
-        raise RESTError(msg='Mistyped or not implemented API function call: %s '
-                            % request.function)
+    if callable(request.hook):
+      return request.hook(id=request.id, data=request.data, **request.kwargs)
     else:
       raise RESTError(msg='Error: No component has registered with name: %s, '
                           'ABORT function call!' % request.layer)

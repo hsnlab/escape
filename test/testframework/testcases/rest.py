@@ -277,6 +277,9 @@ class RESTBasedServiceMixIn(EscapeTestCase):
           self.assertTrue(ret,
                           msg="Got error while sending request: %s" % request)
         success = cbmanager.wait_for_callback()
+        self.assertIsNotNone(cbmanager.last_result,
+                             msg="Service deploy error detected! "
+                                 "No callback received!")
         self.assertTrue(success, msg="Service deploy error detected! "
                                      "Callback returned with error: %s" %
                                      cbmanager.last_result)

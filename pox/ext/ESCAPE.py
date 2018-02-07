@@ -47,6 +47,10 @@ def _start_components (event):
     from infrastructure import launch
 
     launch(topo=init_param['mininet'])
+  # Launch RESt-API Sublayer
+  from rest_api import launch
+
+  launch()
   # Launch Controller Adaptation Sublayer (CAS)
   from adaptation import launch
 
@@ -54,8 +58,7 @@ def _start_components (event):
   # Launch Resource Orchestration Sublayer (ROS)
   from orchestration import launch
 
-  launch(agent=init_param['agent'], rosapi=init_param['rosapi'],
-         cfor=init_param['cfor'])
+  launch(agent=init_param['agent'], rosapi=init_param['rosapi'])
   if not init_param['agent']:
     # Launch Service Layer (mostly SAS)
     from service import launch
@@ -162,8 +165,6 @@ def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
   :type full: bool
   :param loglevel: run on specific run level  (default: INFO)
   :type loglevel: str
-  :param cfor: start Cf-Or REST API (optional)
-  :type cfor: bool
   :param visualization: send NFFGs to remote visualization server (optional)
   :type visualization: bool
   :param mininet: Path of the initial topology graph (optional)

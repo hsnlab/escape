@@ -72,5 +72,5 @@ test:
     module: testframework.testcases.rest
     class: RESTBasedSuccessfulTestCase
     timeout: 10
-    url: http://localhost:8008/escape/sg
+    url: http://localhost:8888/escape/service/sg
     callback: true

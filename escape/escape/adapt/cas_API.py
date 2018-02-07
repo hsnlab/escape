@@ -21,10 +21,11 @@ from escape.adapt.adaptation import ControllerAdapter, \
   InstallationFinishedEvent, \
   InfoRequestFinishedEvent
 from escape.adapt.virtualization import GlobalViewVirtualizer
+from escape.api.rest_API import RESTAPIManager
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest.ros_API import BasicUnifyRequestHandler
-from escape.util.api import AbstractAPI, RESTServer, RequestScheduler
+from escape.util.api import AbstractAPI, RequestScheduler
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import schedule_as_coop_task, quit_with_error
@@ -82,7 +83,7 @@ class ControllerAdaptationAPI(AbstractAPI):
                         DeployNFFGEvent, InfoRequestFinishedEvent}
 
   # Dependencies
-  # None
+  dependencies = ('REST-API',)
 
   def __init__ (self, standalone=False, **kwargs):
     """
@@ -96,6 +97,9 @@ class ControllerAdaptationAPI(AbstractAPI):
       self.dependencies = self.dependencies + (INFR_LAYER_NAME,)
     # Mandatory super() call
     self.controller_adapter = None
+    self.api_mgr = RESTAPIManager(unique_bb_id=False,
+                                  unique_nf_id=True,
+                                  logger=log)
     super(ControllerAdaptationAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
@@ -119,20 +123,6 @@ class ControllerAdaptationAPI(AbstractAPI):
       self._initialize_dov_api()
     log.info("Controller Adaptation Sublayer has been initialized!")
 
-  def post_up_hook (self, event):
-    """
-    Perform tasks after ESCAPE is up.
-
-    :param event: event object
-    :type event: :class:`UpEvent`
-    :return: None
-    """
-    log.debug("Call post Up event hook for layer: %s" % self._core_name)
-    if self._dovapi:
-      self.dov_api.ping_response_code = self.dov_api.POST_UP_PING_CODE
-      log.debug("Setup 'ping' response code: %s for REST-API: %s"
-                % (self.dov_api.ping_response_code, self.dov_api.api_id))
-
   def shutdown (self, event):
     """
     .. seealso::
@@ -146,36 +136,14 @@ class ControllerAdaptationAPI(AbstractAPI):
     self.controller_adapter.shutdown()
 
   def _initialize_dov_api (self):
-    handler = CONFIG.get_dov_api_class()
-    if not handler:
-      log.error("Missing handler class for server in CAS layer!")
-      return
-    handler.bounded_layer = self._core_name
-    params = CONFIG.get_dov_api_params()
-    if 'prefix' in params:
-      handler.static_prefix = params['prefix']
-    if 'unify_interface' in params:
-      handler.virtualizer_format_enabled = params['unify_interface']
-    if 'diff' in params:
-      handler.DEFAULT_DIFF = bool(params['diff'])
-    address = (params.get('address'), params.get('port'))
-    self.dov_api = RESTServer(handler, *address)
-    self.dov_api.api_id = handler.LOGGER_NAME = "DoV-API"
-    self.dov_api.virtualizer_type = CONFIG.get_api_virtualizer(
-      layer_name=LAYER_NAME, api_name=self.dov_api.api_id)
-    handler.log.info("Init DOV-API for %s on %s:%s!" % (
-      self.dov_api.api_id, address[0], address[1]))
+    rest_api = self.get_dependent_component('REST-API')
+    rest_api.register_component(component=self)
     dov = self.controller_adapter.DoVManager.dov
-    self.dov_api_view = GlobalViewVirtualizer(id=self.dov_api.api_id,
+    self.dov_api_view = GlobalViewVirtualizer(id=self._core_name,
                                               global_view=dov)
     log.debug("Created default Virtualizer View for DOV-API: %s"
               % self.dov_api_view)
-    self.dov_api.start()
-    handler.log.debug(
-      "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
-      "diff: %s" % (self.dov_api.api_id, self.dov_api.virtualizer_type,
-                    "UNIFY" if handler.virtualizer_format_enabled else
-                    "Internal-NFFG", handler.DEFAULT_DIFF))
+    return
 
   ##############################################################################
   # UNIFY Or - Ca API functions starts here
@@ -206,14 +174,6 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, mapped_nffg))
-    if hasattr(self, 'dov_api') and self.dov_api:
-      log.getChild('API').debug("Store received DoV request...")
-      msg_id = self.dov_api.request_cache.cache_request_by_nffg(mapped_nffg)
-      if msg_id is not None:
-        self.dov_api.request_cache.set_in_progress(id=msg_id)
-        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
-      else:
-        log.getChild('API').debug("No request info detected.")
     stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY,
                                       info=LAYER_NAME)
     try:
@@ -245,13 +205,17 @@ class ControllerAdaptationAPI(AbstractAPI):
                               id=mapped_nffg.id, result=result)
     elif deploy_status.standby:
       if self._dovapi:
-        self.dov_api.scheduler.set_orchestration_standby()
+        RequestScheduler().set_orchestration_standby()
 
   def _process_mapping_result (self, nffg_id, fail):
-    if not (hasattr(self, 'dov_api') and self.dov_api):
-      return
+    """
+
+    :param nffg_id:
+    :param fail:
+    :return:
+    """
     log.getChild('API').debug("Cache request status...")
-    req_status = self.dov_api.request_cache.get_request_by_nffg_id(nffg_id)
+    req_status = self.api_mgr.request_cache.get_request_by_nffg_id(nffg_id)
     if req_status is None:
       log.getChild('API').debug("Request status is missing for NFFG: %s! "
                                 "Skip result processing..." % nffg_id)
@@ -260,12 +224,12 @@ class ControllerAdaptationAPI(AbstractAPI):
     message_id = req_status.message_id
     if message_id is not None:
       if fail:
-        self.dov_api.request_cache.set_error_result(id=message_id)
+        self.api_mgr.request_cache.set_error_result(id=message_id)
       else:
-        self.dov_api.request_cache.set_success_result(id=message_id)
+        self.api_mgr.request_cache.set_success_result(id=message_id)
       log.info("Set request status: %s for message: %s"
                % (req_status.status, req_status.message_id))
-      ret = self.dov_api.invoke_callback(message_id=message_id)
+      ret = self.api_mgr.invoke_callback(message_id=message_id)
       if ret is None:
         log.getChild('API').debug("No callback was defined!")
       else:
@@ -325,7 +289,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   # Agent API functions starts here
   ##############################################################################
 
-  def api_cas_get_config (self):
+  def rest_api_get_config (self):
     """
     Implementation of REST-API RPC: get-config. Return with the global
     resource as an :class:`NFFG` if it has been changed otherwise return with
@@ -343,35 +307,78 @@ class ControllerAdaptationAPI(AbstractAPI):
                                         "Force to get default topology...")
       else:
         # Check if the resource is changed
-        if self.dov_api.topology_revision == self.dov_api_view.revision:
+        if self.api_mgr.topology_revision == self.dov_api_view.revision:
           # If resource has not been changed return False
           # This causes to response with the cached topology
-          return False
+          log.debug("Global resource has not changed (revision: %s)! "
+                    % self.dov_api_view.revision)
+          log.debug("Send topology from cache...")
+          if self.api_mgr.last_response is None:
+            log.error("Cached topology is missing!")
+            return
+          else:
+            return self.api_mgr.last_response
         else:
           log.getChild('[DOV-API]').debug("Response cache is outdated "
                                           "(new revision: %s)!"
                                           % self.dov_api_view.revision)
       res = self.dov_api_view.get_resource_info()
-      self.dov_api.topology_revision = self.dov_api_view.revision
+      self.api_mgr.topology_revision = self.dov_api_view.revision
+      log.debug("Updated revision number: %s"
+                % self.api_mgr.topology_revision)
+      if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
+        log.debug("Convert internal NFFG to Virtualizer...")
+        res = self.api_mgr.converter.dump_to_Virtualizer(nffg=res)
+      log.debug("Cache acquired topology...")
+      self.api_mgr.last_response = res
       return res
     else:
       log.error("Virtualizer(id=%s) assigned to DoV-API is not found!" %
-                self.dov_api.api_id)
+                self._core_name)
 
   # noinspection PyUnusedLocal
-  def api_cas_edit_config (self, nffg, params):
+  def rest_api_edit_config (self, id, data, params=None):
     """
     Implement edit-config call for CAS layer. Receive edit-config request from
     external component and directly forward data for deployment.
 
-    :param nffg: received request
-    :type nffg: :class:`NFFG`
     :param params: request params
     :type params: dict
     :return: None
     """
     log.getChild('[DOV-API]').info("Invoke instantiation on %s with NF-FG: "
-                                   "%s " % (self.__class__.__name__, nffg.name))
+                                   "%s " % (self.__class__.__name__, id))
+    if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
+      log.debug("Virtualizer format enabled! Start conversion step...")
+      if CONFIG.get_rest_api_config(self._core_name)['diff']:
+        log.debug("Diff format enabled! Start patching step...")
+        if self.api_mgr.last_response is None:
+          log.info("Missing cached Virtualizer! Acquiring topology now...")
+          self.rest_api_get_config()
+        stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
+                                          info="RECREATE-FULL-REQUEST")
+        log.info("Patching cached topology with received diff...")
+        full_req = self.api_mgr.last_response.full_copy()
+        full_req.patch(source=data)
+        stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
+                                        info="RECREATE-FULL-REQUEST")
+      else:
+        full_req = data
+      log.info("Converting full request data...")
+      stats.add_measurement_start_entry(type=stats.TYPE_CONVERSION,
+                                        info="VIRTUALIZER-->NFFG")
+      nffg = self.api_mgr.converter.parse_from_Virtualizer(vdata=full_req)
+      stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
+                                      info="VIRTUALIZER-->NFFG")
+    else:
+      nffg = data
+    log.debug("Set NFFG id: %s" % id)
+    if nffg.service_id is None:
+      nffg.service_id = nffg.id
+    nffg.id = id
+    if params:
+      nffg.add_metadata(name="params", value=params)
+    log.debug("Proceeding request: %s to instantiation..." % id)
     if CONFIG.get_vnfm_enabled():
       deploy_status = self.controller_adapter.status_mgr.get_last_status()
       if deploy_status is None:
@@ -385,6 +392,13 @@ class ControllerAdaptationAPI(AbstractAPI):
           return
         else:
           self.controller_adapter.cancel_vnfm_timer()
+    log.getChild('API').debug("Store received DoV request...")
+    msg_id = self.api_mgr.request_cache.cache_request_by_nffg(nffg=nffg)
+    if msg_id is not None:
+      self.api_mgr.request_cache.set_in_progress(id=msg_id)
+      log.getChild('API').debug("Request is stored with id: %s" % msg_id)
+    else:
+      log.getChild('API').warning("No request info detected.")
     self.__proceed_installation(mapped_nffg=nffg, direct_deploy=True)
 
 

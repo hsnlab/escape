@@ -12,14 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Main POX module for ESCAPE Resource Orchestration Sublayer (ROS).
-
-Initiate appropriate API class which implements Sl-Or reference point.
-
-Follows POX module conventions.
 """
 import pox.lib.util as poxutil
-from escape.orchest.ros_API import ResourceOrchestrationAPI
+from escape.api.rest_API import RestInterfaceAPI
 from pox.core import core
 
 # Initial parameters
@@ -29,28 +24,23 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run Orchestration module.
+  Initiate and run Service module.
 
   :param event: POX's going up event
   :type event: :class:`pox.core.GoingUpEvent`
   :return: None
   """
   # Instantiate the API class and register into pox.core only once
-  ResourceOrchestrationAPI(**init_param)
+  RestInterfaceAPI(**init_param)
 
 
 @poxutil.eval_args
-def launch (nffg_file='', standalone=False, agent=False, rosapi=False):
+def launch (standalone=False):
   """
   Launch function called by POX core when core is up.
 
-  :param nffg_file: Path of the NF-FG graph (optional)
-  :type nffg_file: str
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool
-  :param agent: start a REST API and act like an agent
-  :type agent: bool
-
   :return: None
   """
   global init_param
