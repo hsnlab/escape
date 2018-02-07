@@ -25,7 +25,7 @@ import socket
 import time
 import warnings
 import weakref
-from functools import wraps
+from functools import wraps, partial
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
@@ -222,14 +222,22 @@ def quit_with_code (ret_code, msg=None, logger=None):
 
   :return: None
   """
+
+  def _return_code (event):
+    os._exit(ret_code)
+
   from pox.core import core
   if isinstance(logger, str):
     logger = core.getLogger(logger)
   elif not isinstance(logger, logging.Logger):
     logger = core.getLogger("core")
   logger.info(msg if msg else "Exiting from ESCAPE...")
+  from pox.core import core
+  core.addListenerByName("DownEvent", _return_code)
   core.quit()
-  os._exit(ret_code)
+
+
+quit_with_restart = partial(quit_with_code, ret_code=RESTART_VALUE)
 
 
 def set_global_parameter (name, value):

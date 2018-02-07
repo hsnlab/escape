@@ -30,7 +30,8 @@ from escape.util.api import AbstractAPI, RequestScheduler, RequestCache
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
-from escape.util.misc import get_escape_version
+from escape.util.misc import get_escape_version, quit_with_restart, \
+  call_as_coop_task, quit_with_ok
 from escape.util.stat import stats
 from virtualizer import Virtualizer
 from virtualizer_info import Info
@@ -74,8 +75,7 @@ class RestInterfaceAPI(AbstractAPI):
     self.__server.flask.before_request(self.incoming_logger)
     self.__server.flask.after_request(self.outcoming_logger)
     # Add <prefix>/version rule by default
-    self.__server.flask.add_url_rule(rule="/%s/version" % self.prefix,
-                                     view_func=get_escape_version)
+    AdminView().register_rules(app=self.__server.flask)
     # Add custom exception handling
     self.__server.flask.register_error_handler(Exception,
                                                self.unhandled_exception)
@@ -127,6 +127,35 @@ class RestInterfaceAPI(AbstractAPI):
   def unhandled_exception (ex):
     log.exception("Got unexpected exception: %s" % ex)
     return Response(status=httplib.INTERNAL_SERVER_ERROR)
+
+
+class AdminView(object):
+  ADMIN_PREFIX = "_admin_"
+  name = "admin"
+
+  def __init__ (self):
+    self.prefix = CONFIG.get_rest_api_prefix()
+
+  def register_rules (self, app):
+    for cmd in (f for f in dir(self) if f.startswith(self.ADMIN_PREFIX)):
+      rule = "/%s/admin/%s" % (self.prefix, cmd[len(self.ADMIN_PREFIX):])
+      app.add_url_rule(rule=rule, endpoint=rule,
+                       view_func=getattr(self, cmd))
+      log.debug("Registered rule: %s" % rule)
+
+  @staticmethod
+  def _admin_version ():
+    return Response(get_escape_version())
+
+  @staticmethod
+  def _admin_shutdown ():
+    call_as_coop_task(func=quit_with_ok)
+    return Response("SHUTDOWN accepted.")
+
+  @staticmethod
+  def _admin_restart ():
+    call_as_coop_task(func=quit_with_restart)
+    return Response("RESTART accepted.")
 
 
 class MainApiServer(object):
