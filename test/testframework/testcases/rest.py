@@ -150,7 +150,7 @@ class CallbackManager(HTTPServer, Thread):
   def __str__ (self):
     return "%s(address: %s, timeout: %s)" % (self.__class__.__name__,
                                              self.server_address,
-                                             self.timeout)
+                                             self.wait_timeout)
 
   def shutdown (self):
     log.debug("Shutdown %s..." % self)
@@ -292,7 +292,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     :param data: raw request data
     :type data: str
     :param ext: file extension to define request format
-    :type ext: str
+    :type ext: basestring
     :return: request sending was successful or not
     :rtype: bool
     """

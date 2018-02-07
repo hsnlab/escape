@@ -15,6 +15,7 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
+import errno
 import httplib
 import json
 import pprint
@@ -951,6 +952,26 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   API_CALL_RESOURCE = 'api_ros_get_config'
   API_CALL_REQUEST = 'api_ros_edit_config'
 
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+
+    :param request: request type
+    :type request: str
+    :param client_address: client address
+    :type client_address: str
+    :param server: server object
+    :type server: :any:`BaseHTTPServer.HTTPServer`
+    :return: None
+    """
+    try:
+      AbstractRequestHandler.__init__(self, request, client_address, server)
+    except IOError as e:
+      if e.errno == errno.EPIPE:
+        pass
+      else:
+        raise
+
   def setup (self):
     super(BasicUnifyRequestHandler, self).setup()
     self.converter = NFFGConverter(
@@ -1138,7 +1159,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         # Perform patching
         full_cfg = self.__recreate_full_request(diff=received_cfg)
         stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
-                                          info="RECREATE-FULL-REQUEST")
+                                        info="RECREATE-FULL-REQUEST")
       else:
         full_cfg = received_cfg
       self.log.log(VERBOSE, "Received full request:\n%s" % full_cfg.xml())
@@ -1148,7 +1169,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
                                         info="VIRTUALIZER-->NFFG")
       nffg = self.converter.parse_from_Virtualizer(vdata=full_cfg)
       stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
-                                        info="VIRTUALIZER-->NFFG")
+                                      info="VIRTUALIZER-->NFFG")
     else:
       if self.headers.get("Content-Type") != "application/json":
         self.log.error("Received data is not in JSON format despite of the "

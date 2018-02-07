@@ -127,6 +127,8 @@ def main ():
   escape.add_argument("-l", "--log", metavar="file", type=str,
                       help="define log file path explicitly "
                            "(default: log/escape.log)")
+  escape.add_argument("--log_folder", metavar="path", type=str,
+                      help="define log folder path explicitly (default: log/)")
   escape.add_argument("-m", "--mininet", metavar="file", type=str,
                       help="read the Mininet topology from the given file")
   escape.add_argument("-n", "--nosignal", action="store_true", default=False,
@@ -186,8 +188,12 @@ def main ():
 
   if args.test:
     cmd.append("--test")
+
   if args.log:
     cmd.append("--log=%s" % args.log)
+
+  if args.log_folder:
+    cmd.append("--log_folder=%s" % args.log_folder)
 
   if args.quit:
     cmd.append("--quit")
