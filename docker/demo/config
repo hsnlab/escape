@@ -1,0 +1,3 @@
+Host 5gexgit.tmit.bme.hu
+    IdentityFile ~/.ssh/id_rsa
+    StrictHostKeyChecking no
