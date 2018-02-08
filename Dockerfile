@@ -14,7 +14,5 @@ RUN apk add --repository http://dl-3.alpinelinux.org/alpine/edge/community/ \
 RUN pip install --no-cache-dir -U $(grep -v -e \# -e numpy requirements.txt)
 EXPOSE 8888 9000
 ENV PYTHONUNBUFFERED 1
-#ENTRYPOINT ["python", "escape.py"]
-#ENTRYPOINT ["bash", "-c", "/opt/escape/docker_startup.sh"]
 ENTRYPOINT ["./docker_startup.sh"]
 CMD ["--debug", "--rosapi", "--config", "config/escape-static-dummy.yaml"]
