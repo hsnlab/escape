@@ -14,9 +14,12 @@
 # limitations under the License.
 
 RESTART_VALUE=42
+UPDATE_VALUE=142
 
 function update() {
     echo "Updating ESCAPE source base..."
+    git pull
+    git submodule update
 }
 
 while true
@@ -25,11 +28,10 @@ do
     python escape.py ${@}
     ret_value=${?}
     echo "Received exit code from ESCAPE: $ret_value"
-    if [ ${ret_value} -eq ${RESTART_VALUE} ]
-    then
-        echo ""
-        update
+    if [ ${ret_value} -eq ${RESTART_VALUE} ]; then
         echo "Restarting..."
+    elif [ ${ret_value} -eq ${UPDATE_VALUE} ]; then
+        update
     else
         echo "Exit."
         exit 0

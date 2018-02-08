@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir -U $(grep -v -e \# -e numpy requirements.txt)
 # Setup git and pull the latest updates
 RUN cp -r docker/demo ~/.ssh && \
     ln -fs .gitmodules.5gex .gitmodules && \
-    git remote set-url origin git@5gexgit.tmit.bme.hu:unify/escape.git
+    git remote set-url origin git@5gexgit.tmit.bme.hu:unify/escape.git && \
+    chmod 600 ~/.ssh/*
 EXPOSE 8888 9000
 ENV PYTHONUNBUFFERED 1
 ENTRYPOINT ["./docker_startup.sh"]
