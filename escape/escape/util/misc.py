@@ -34,7 +34,7 @@ VERBOSE = 5
 """Verbose logging level"""
 
 RESTART_VALUE = 42
-
+UPDATE_VALUE = 142
 
 def schedule_as_coop_task (func):
   """
@@ -238,6 +238,7 @@ def quit_with_code (ret_code, msg=None, logger=None):
 
 
 quit_with_restart = partial(quit_with_code, ret_code=RESTART_VALUE)
+quit_with_update = partial(quit_with_code, ret_code=UPDATE_VALUE)
 
 
 def set_global_parameter (name, value):

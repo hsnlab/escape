@@ -31,7 +31,7 @@ from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import get_escape_version, quit_with_restart, \
-  call_as_coop_task, quit_with_ok, quit_with_code
+  call_as_coop_task, quit_with_ok, quit_with_code, quit_with_update
 from escape.util.stat import stats
 from virtualizer import Virtualizer
 from virtualizer_info import Info
@@ -159,8 +159,8 @@ class AdminView(object):
 
   @staticmethod
   def _admin_update ():
-    call_as_coop_task(func=quit_with_code, ret_code=142)
-    return Response("RESTART accepted.\n", httplib.ACCEPTED)
+    call_as_coop_task(func=quit_with_update)
+    return Response("UPDATE accepted.\n", httplib.ACCEPTED)
 
 
 class MainApiServer(object):
