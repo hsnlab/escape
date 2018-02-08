@@ -150,12 +150,12 @@ class AdminView(object):
   @staticmethod
   def _admin_shutdown ():
     call_as_coop_task(func=quit_with_ok)
-    return Response("SHUTDOWN accepted.")
+    return Response("SHUTDOWN accepted.\n", httplib.ACCEPTED)
 
   @staticmethod
   def _admin_restart ():
     call_as_coop_task(func=quit_with_restart)
-    return Response("RESTART accepted.")
+    return Response("RESTART accepted.\n", httplib.ACCEPTED)
 
 
 class MainApiServer(object):
