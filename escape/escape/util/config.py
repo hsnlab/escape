@@ -476,6 +476,18 @@ class ESCAPEConfig(object):
     except KeyError:
       return {}
 
+  def get_rest_api_user(self):
+    try:
+      return self.__config['REST-API'].get('auth_user')
+    except KeyError:
+      return None
+
+  def get_rest_api_secret(self):
+    try:
+      return self.__config['REST-API'].get('auth_secret')
+    except KeyError:
+      return None
+
   ##############################################################################
   # SERVICE layer getters
   ##############################################################################

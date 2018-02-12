@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import hashlib
 import httplib
 import json
 import logging
@@ -21,6 +22,7 @@ import requests
 from flask import request, Response
 from flask.app import Flask
 from flask.views import View
+from flask_httpauth import HTTPBasicAuth
 from requests import RequestException, Timeout
 from werkzeug.serving import make_server
 
@@ -31,7 +33,7 @@ from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import get_escape_version, quit_with_restart, \
-  call_as_coop_task, quit_with_ok, quit_with_code, quit_with_update
+  call_as_coop_task, quit_with_ok, quit_with_update
 from escape.util.stat import stats
 from virtualizer import Virtualizer
 from virtualizer_info import Info
@@ -129,37 +131,70 @@ class RestInterfaceAPI(AbstractAPI):
     return Response(status=httplib.INTERNAL_SERVER_ERROR)
 
 
-class AdminView(object):
+class AdminView(View):
   ADMIN_PREFIX = "_admin_"
   name = "admin"
+  RULE_TEMPLATE = "/%s/admin/<any(%s):rpc>"
+  prefix = CONFIG.get_rest_api_prefix()
+  rpcs = ("shutdown", "restart", "version", "update")
+  methods = ('GET', 'POST')
+  auth = HTTPBasicAuth()
+  decorators = [auth.login_required]
 
   def __init__ (self):
-    self.prefix = CONFIG.get_rest_api_prefix()
-
-  def register_rules (self, app):
-    for cmd in (f for f in dir(self) if f.startswith(self.ADMIN_PREFIX)):
-      rule = "/%s/admin/%s" % (self.prefix, cmd[len(self.ADMIN_PREFIX):])
-      app.add_url_rule(rule=rule, endpoint=rule,
-                       view_func=getattr(self, cmd))
-      log.debug("Registered rule: %s" % rule)
+    # Add authentication helpers
+    self.auth.get_password(self.get_passwd)
+    self.auth.hash_password(self.hash_passwd)
 
   @staticmethod
-  def _admin_version ():
+  def hash_passwd (passwd):
+    return hashlib.md5(passwd).hexdigest()
+
+  @staticmethod
+  def get_passwd (username):
+    if username == CONFIG.get_rest_api_user():
+      return CONFIG.get_rest_api_secret()
+    log.error("Invalid username!")
+
+  def dispatch_request (self, rpc):
+    if rpc not in self.rpcs:
+      return Response(status=httplib.NOT_IMPLEMENTED)
+    else:
+      return getattr(self, rpc)()
+
+  @classmethod
+  def register_rules (cls, app):
+    rule = "/%s/admin/version" % cls.prefix
+    app.add_url_rule(rule="/%s/admin/version" % cls.prefix,
+                     endpoint="admin/version",
+                     view_func=cls.version)
+    log.debug("Registered rule: %s" % rule)
+    rule = cls.RULE_TEMPLATE % (cls.prefix, ','.join(cls.rpcs))
+    app.add_url_rule(rule=rule,
+                     endpoint=cls.name,
+                     view_func=cls.as_view(name=cls.name))
+    log.debug("Registered rule: %s" % rule)
+
+  @staticmethod
+  def version ():
     return Response(get_escape_version())
 
   @staticmethod
-  def _admin_shutdown ():
+  def shutdown ():
     call_as_coop_task(func=quit_with_ok)
+    log.info("Shutdown task scheduled")
     return Response("SHUTDOWN accepted.\n", httplib.ACCEPTED)
 
   @staticmethod
-  def _admin_restart ():
+  def restart ():
     call_as_coop_task(func=quit_with_restart)
+    log.info("Restart task scheduled")
     return Response("RESTART accepted.\n", httplib.ACCEPTED)
 
   @staticmethod
-  def _admin_update ():
+  def update ():
     call_as_coop_task(func=quit_with_update)
+    log.info("Update task scheduled")
     return Response("UPDATE accepted.\n", httplib.ACCEPTED)
 
 
