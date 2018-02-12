@@ -328,7 +328,7 @@ class NFFGConverter(object):
         # SAP.id <--> virtualizer.node.port.name
         elif vport.name.is_initialized() and \
            vport.name.get_as_text().upper().startswith(
-                self.SAP_NAME_PREFIX + ":"):
+             self.SAP_NAME_PREFIX + ":"):
           sap_id = vport.name.get_as_text()[len(self.SAP_NAME_PREFIX + ":"):]
           self.log.debug("Detected SAP id from name field: %s" % sap_id)
         elif vport.name.is_initialized() and \
@@ -1410,7 +1410,7 @@ class NFFGConverter(object):
         params['qos'] = vlink.resources.qos.get_value()
       # Check the link is a possible backward link
       possible_backward = (
-        "%s:%s-%s:%s" % (dst_node_id, dst_port_id, src_node_id, src_port_id))
+         "%s:%s-%s:%s" % (dst_node_id, dst_port_id, src_node_id, src_port_id))
       if possible_backward in added_links:
         params['backward'] = True
       # Add unidirectional link
@@ -1931,7 +1931,7 @@ class NFFGConverter(object):
         continue
       # SAP - Infra links are not stored in Virtualizer format
       if link.src.node.type == NFFG.TYPE_SAP or \
-            link.dst.node.type == NFFG.TYPE_SAP:
+         link.dst.node.type == NFFG.TYPE_SAP:
         continue
       self.log.debug(
         "Added link: Node: %s, port: %s <--> Node: %s, port: %s" % (
@@ -2590,7 +2590,7 @@ class NFFGConverter(object):
     :return: modified Virtualizer object
     :rtype: :class:`Virtualizer`
     """
-    virt = virtualizer.full_copy()
+    virt = virtualizer.yang_copy()
     # Remove previously installed NFs and flowrules from Virtualizer for
     # e.g. correct diff calculation
     if reinstall:
@@ -2664,7 +2664,7 @@ class NFFGConverter(object):
     """
     if base is not None:
       self.log.debug("Using given base Virtualizer: %s" % base.id.get_value())
-      base = base.full_copy()
+      base = base.yang_copy()
       # Remove previously installed NFs and flowrules from Virtualizer for
       # e.g. correct diff calculation
       if reinstall:
@@ -2852,7 +2852,7 @@ class UC3MNFFGConverter(object):
         self.log.log(level, 'Detected node: %s' % node_id)
         if filter_empty_nodes:
           if len(node['links']['link']) == 0 and \
-                len(node.get('resources', ())) == 0:
+             len(node.get('resources', ())) == 0:
             # There is no intra BisBis link --> empty BB
             self.log.log(level, "Node is a bare BiSBiS! Jump to next node...")
             continue

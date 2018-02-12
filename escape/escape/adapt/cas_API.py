@@ -24,10 +24,8 @@ from escape.adapt.virtualization import GlobalViewVirtualizer
 from escape.api.rest_API import RESTAPIManager
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
-from escape.orchest.ros_API import BasicUnifyRequestHandler
 from escape.util.api import AbstractAPI, RequestScheduler
 from escape.util.config import CONFIG
-from escape.util.conversion import NFFGConverter
 from escape.util.misc import schedule_as_coop_task, quit_with_error
 from escape.util.stat import stats
 from pox.lib.revent.revent import Event
@@ -358,7 +356,7 @@ class ControllerAdaptationAPI(AbstractAPI):
         stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
                                           info="RECREATE-FULL-REQUEST")
         log.info("Patching cached topology with received diff...")
-        full_req = self.api_mgr.last_response.full_copy()
+        full_req = self.api_mgr.last_response.yang_copy()
         full_req.patch(source=data)
         stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
                                         info="RECREATE-FULL-REQUEST")
@@ -401,33 +399,32 @@ class ControllerAdaptationAPI(AbstractAPI):
       log.getChild('API').warning("No request info detected.")
     self.__proceed_installation(mapped_nffg=nffg, direct_deploy=True)
 
-
-class DirectDoVRequestHandler(BasicUnifyRequestHandler):
-  """
-  Dedicated request handler class for CAS REST-API.
-  """
-  LOGGER_NAME = "Dov-API"
-  log = log.getChild("[%s]" % LOGGER_NAME)
-  # Name mapper to avoid Python naming constraint
-  rpc_mapper = {
-    'get-config': "get_config",
-    'edit-config': "edit_config"
-  }
-  """Name mapper to avoid Python naming constraint"""
-  # Bound function
-  API_CALL_RESOURCE = 'api_cas_get_config'
-  API_CALL_REQUEST = 'api_cas_edit_config'
-
-  def setup (self):
-    super(DirectDoVRequestHandler, self).setup()
-    self.converter = NFFGConverter(unique_bb_id=False,
-                                   unique_nf_id=True,
-                                   logger=log)
-    # Force disable adding domain to BB nodes that are parts of DoV
-    self.converter._unique_bb_id = False
-    # Force enable adding domain to BB nodes that are parts of DoV
-    self.converter._unique_nf_id = True
-    self.log.debug("Forced ID management for %s: unique BiSBiS ID: %s,"
-                   " unique NF ID: %s" % (self.__class__.__name__,
-                                          self.converter._unique_bb_id,
-                                          self.converter._unique_nf_id))
+# class DirectDoVRequestHandler(BasicUnifyRequestHandler):
+#   """
+#   Dedicated request handler class for CAS REST-API.
+#   """
+#   LOGGER_NAME = "Dov-API"
+#   log = log.getChild("[%s]" % LOGGER_NAME)
+#   # Name mapper to avoid Python naming constraint
+#   rpc_mapper = {
+#     'get-config': "get_config",
+#     'edit-config': "edit_config"
+#   }
+#   """Name mapper to avoid Python naming constraint"""
+#   # Bound function
+#   API_CALL_RESOURCE = 'api_cas_get_config'
+#   API_CALL_REQUEST = 'api_cas_edit_config'
+#
+#   def setup (self):
+#     super(DirectDoVRequestHandler, self).setup()
+#     self.converter = NFFGConverter(unique_bb_id=False,
+#                                    unique_nf_id=True,
+#                                    logger=log)
+#     # Force disable adding domain to BB nodes that are parts of DoV
+#     self.converter._unique_bb_id = False
+#     # Force enable adding domain to BB nodes that are parts of DoV
+#     self.converter._unique_nf_id = True
+#     self.log.debug("Forced ID management for %s: unique BiSBiS ID: %s,"
+#                    " unique NF ID: %s" % (self.__class__.__name__,
+#                                           self.converter._unique_bb_id,
+#                                           self.converter._unique_nf_id))

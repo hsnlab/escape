@@ -220,7 +220,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     :rtype: :class:`Virtualizer`
     """
     dov = self.virtualizerManager.dov.get_resource_info()
-    response = mappings.full_copy()
+    response = mappings.yang_copy()
     log.debug("Start checking mappings...")
     for mapping in response:
       bb, nf = detect_bb_nf_from_path(path=mapping.object.get_value(),
@@ -263,7 +263,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     :rtype: :class:`Info`
     """
     log.debug("Filter info request based on layer view: %s..." % slor_topo.id)
-    info = info.full_copy()
+    info = info.yang_copy()
     for attr in (getattr(info, e) for e in info._sorted_children):
       deletable = []
       for element in attr:

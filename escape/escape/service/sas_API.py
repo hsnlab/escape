@@ -15,20 +15,16 @@
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 """
-import httplib
 import os
 from subprocess import Popen
 
 from escape.api.rest_API import RESTAPIManager
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
-from escape.orchest.ros_API import InstantiationFinishedEvent, \
-  BasicUnifyRequestHandler
+from escape.orchest.ros_API import InstantiationFinishedEvent
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
-from escape.util.api import AbstractAPI, AbstractRequestHandler, \
-  RequestStatus, RequestScheduler
-from escape.util.api import AbstractAPI, RESTServer, RequestStatus, \
+from escape.util.api import AbstractAPI, RequestStatus, \
   RequestScheduler
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
@@ -78,106 +74,6 @@ class GetVirtResInfoEvent(Event):
     super(GetVirtResInfoEvent, self).__init__()
     # service layer ID
     self.sid = sid
-
-
-class ServiceRequestHandler(BasicUnifyRequestHandler):
-  """
-  Request Handler for Service Adaptation SubLayer.
-
-  .. warning::
-    This class is out of the context of the recoco's co-operative thread
-    context! While you don't need to worry much about synchronization between
-    recoco tasks, you do need to think about synchronization between recoco task
-    and normal threads. Synchronisation is needed to take care manually: use
-    relevant helper function of core object: `callLater`/`raiseLater` or use
-    `schedule_as_coop_task` decorator defined in util.misc on the called
-    function.
-  """
-  # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {
-    'GET': ('ping', 'version', 'operations', 'topology', 'status'),
-    'POST': ('ping', 'sg', 'topology'),
-    # 'DELETE': ('sg',),
-    'PUT': ('sg',)
-  }
-  """Bind HTTP verbs to UNIFY's API functions"""
-  # Statically defined layer component to which this handler is bounded
-  # Need to be set by container class
-  bounded_layer = 'service'
-  """Statically defined layer component to which this handler is bounded"""
-  static_prefix = "escape"
-  # Logger name
-  LOGGER_NAME = "U-Sl"
-  """Logger name"""
-  log = log.getChild("[%s]" % LOGGER_NAME)
-  # Use Virtualizer format
-  virtualizer_format_enabled = False
-  """Use Virtualizer format"""
-  # Default communication approach
-  DEFAULT_DIFF = True
-  """Default communication approach"""
-  # Bound function
-  API_CALL_RESOURCE = 'api_sas_get_topology'
-  API_CALL_REQUEST = 'api_sas_sg_request'
-
-  def status (self, params):
-    """
-    Return status of the given request.
-
-    :param params:
-    :return:
-    """
-    message_id = params.get('message-id')
-    if not message_id:
-      self.send_error(code=httplib.BAD_REQUEST, message="message-id is missing")
-      return
-    code, result = self._proceed_API_call('api_sas_status', message_id)
-    if not result:
-      self.send_acknowledge(code=code, message_id=message_id)
-      self.log.debug("Responded status code: %s" % code)
-    else:
-      self.send_json_response(code=code, data=result)
-      self.log.debug("Responded status code: %s, data: %s" % (code, result))
-
-  def topology (self, params):
-    """
-    Provide internal topology description
-
-    Same functionality as "get-config" in UNIFY interface.
-
-    :return: None
-    """
-    self.log.debug("Call %s function: topology" % self.LOGGER_NAME)
-    # Forward call to main layer class
-    resource = self._proceed_API_call(self.API_CALL_RESOURCE)
-    self._topology_view_responder(resource_nffg=resource,
-                                  message_id=params.get(self.MESSAGE_ID_NAME))
-    self.log.debug("%s function: topology ended!" % self.LOGGER_NAME)
-
-  def sg (self, params):
-    """
-    Main API function for Service Graph initiation.
-
-    Same functionality as "get-config" in UNIFY interface.
-
-    Bounded to POST HTTP verb.
-
-    :return: None
-    """
-    self.log.debug("Call %s function: sg" % self.LOGGER_NAME)
-    nffg = self._service_request_parser()
-    if nffg:
-      if nffg.service_id is None:
-        nffg.service_id = nffg.id
-      nffg.id = params[self.MESSAGE_ID_NAME]
-      self.log.debug("Set NFFG id: %s" % nffg.id)
-      nffg.metadata['params'] = params
-      self.server.scheduler.schedule_request(id=nffg.id,
-                                             layer=self.bounded_layer,
-                                             function=self.API_CALL_REQUEST,
-                                             service_nffg=nffg, params=params)
-      self.send_acknowledge(message_id=params[self.MESSAGE_ID_NAME])
-    self.log.debug("%s function: sg ended!" % self.LOGGER_NAME)
 
 
 class ServiceLayerAPI(AbstractAPI):
@@ -368,7 +264,7 @@ class ServiceLayerAPI(AbstractAPI):
         stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
                                           info="RECREATE-FULL-REQUEST")
         log.info("Patching cached topology with received diff...")
-        full_req = self.api_mgr.last_response.full_copy()
+        full_req = self.api_mgr.last_response.yang_copy()
         full_req.patch(source=data)
         stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
                                         info="RECREATE-FULL-REQUEST")
@@ -529,7 +425,7 @@ class ServiceLayerAPI(AbstractAPI):
           # If resource has not been changed return False
           # This causes to response with the cached topology
           log.debug("Global resource has not changed (revision: %s)! "
-                         % sas_virt.revision)
+                    % sas_virt.revision)
           log.debug("Send topology from cache...")
           if self.api_mgr.last_response is None:
             log.error("Cached topology is missing!")
@@ -538,13 +434,13 @@ class ServiceLayerAPI(AbstractAPI):
             return self.api_mgr.last_response
         else:
           log.debug("Response cache is outdated (new revision: %s)!"
-                         % sas_virt.revision)
+                    % sas_virt.revision)
         log.getChild('[U-Sl]').debug("Generate topo description...")
       # return with the virtual view as an NFFG
       res = sas_virt.get_resource_info()
       self.api_mgr.topology_revision = sas_virt.revision
       log.debug("Updated revision number: %s"
-                     % self.api_mgr.topology_revision)
+                % self.api_mgr.topology_revision)
       if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
         log.debug("Convert internal NFFG to Virtualizer...")
         res = self.api_mgr.converter.dump_to_Virtualizer(nffg=res)

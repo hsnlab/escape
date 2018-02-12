@@ -110,7 +110,7 @@ def strip_info_by_nfs (info, nfs):
   :return: stripped Info object
   :rtype: :class:`Info`
   """
-  info = info.full_copy()
+  info = info.yang_copy()
   for attr in (getattr(info, e) for e in info._sorted_children):
     deletable = []
     for element in attr:
