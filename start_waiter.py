@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import hashlib
+import pprint
 from argparse import ArgumentParser
 
 import yaml
@@ -27,20 +28,26 @@ parser = ArgumentParser(description="Restart waiter",
 parser.add_argument("-c", "--config", default=ESC_DEF_CFG,
                     help="configuration for REST-API (default: %s)" %
                          ESC_DEF_CFG)
-parser.add_argument("-p", "--port", default=DEFAULT_PORT, type=int,
-                    help="listening port (default: %s)" % DEFAULT_PORT)
 args, unknown = parser.parse_known_args()
 
-with open(args.config) as f:
-  esc_cfg = yaml.safe_load(f)
+CONFIG = {}
 
-try:
-  USER = esc_cfg['REST-API']['auth_user']
-  SECRET = esc_cfg['REST-API']['auth_secret']
-  PREFIX = "/%s/admin/start" % esc_cfg['REST-API']['prefix']
-except KeyError as e:
-  print "Missing config entry from config file: %s, %s" % (args.config, e)
-  exit(-1)
+with open(ESC_DEF_CFG) as f:
+  esc_cfg = yaml.safe_load(f)
+  for key in ('host', 'port', 'auth_user', 'auth_secret', 'prefix'):
+    CONFIG[key] = esc_cfg['REST-API'][key]
+
+if args.config:
+  with open(args.config) as f:
+    esc_cfg = yaml.safe_load(f)
+    for key in ('auth_user', 'auth_secret', 'prefix'):
+      try:
+        CONFIG[key] = esc_cfg['REST-API'][key]
+      except KeyError:
+        pass
+
+print "Parsed configuration:"
+pprint.pprint(CONFIG, indent=2)
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -53,12 +60,12 @@ def hash_passwd (passwd):
 
 @auth.get_password
 def get_passwd (username):
-  if username == USER:
-    return SECRET
+  if username == CONFIG['auth_user']:
+    return CONFIG['auth_secret']
   print "Invalid username!"
 
 
-@app.route(PREFIX, methods=['GET', 'POST'])
+@app.route("/%s/admin/start" % CONFIG['prefix'], methods=['GET', 'POST'])
 @auth.login_required
 def wait_for_exit ():
   print "Authenticated!"
@@ -73,7 +80,7 @@ def wait_for_exit ():
 if __name__ == "__main__":
   try:
     print "Waiting for start command..."
-    app.run(host="0.0.0.0", port=args.port)
+    app.run(host=CONFIG['host'], port=CONFIG['port'])
   except KeyboardInterrupt:
     pass
   print "Exit"
