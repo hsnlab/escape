@@ -15,6 +15,7 @@
 
 RESTART_VALUE=42
 UPDATE_VALUE=142
+STOP_VALUE=242
 
 function update() {
     echo "Updating ESCAPE source base..."
@@ -32,6 +33,11 @@ do
         echo "Restarting..."
     elif [ ${ret_value} -eq ${UPDATE_VALUE} ]; then
         update
+    elif [ ${ret_value} -eq ${STOP_VALUE} ]; then
+        python start_waiter.py ${@}
+        if [ ${?} -ne 0 ]; then
+            exit -1
+        fi
     else
         echo "Exit."
         exit 0

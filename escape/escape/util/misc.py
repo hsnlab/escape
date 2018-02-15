@@ -25,7 +25,7 @@ import socket
 import time
 import warnings
 import weakref
-from functools import wraps, partial
+from functools import wraps
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
@@ -33,8 +33,6 @@ from subprocess import STDOUT, Popen, PIPE
 VERBOSE = 5
 """Verbose logging level"""
 
-RESTART_VALUE = 42
-UPDATE_VALUE = 142
 
 def schedule_as_coop_task (func):
   """
@@ -235,10 +233,6 @@ def quit_with_code (ret_code, msg=None, logger=None):
   from pox.core import core
   core.addListenerByName("DownEvent", _return_code)
   core.quit()
-
-
-quit_with_restart = partial(quit_with_code, ret_code=RESTART_VALUE)
-quit_with_update = partial(quit_with_code, ret_code=UPDATE_VALUE)
 
 
 def set_global_parameter (name, value):

@@ -32,12 +32,16 @@ from escape.util.api import AbstractAPI, RequestScheduler, RequestCache
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
-from escape.util.misc import get_escape_version, quit_with_restart, \
-  call_as_coop_task, quit_with_ok, quit_with_update
+from escape.util.misc import get_escape_version, \
+  call_as_coop_task, quit_with_ok, quit_with_code
 from escape.util.stat import stats
 from virtualizer import Virtualizer
 from virtualizer_info import Info
 from virtualizer_mappings import Mappings
+
+RESTART_VALUE = 42
+UPDATE_VALUE = 142
+STOP_VALUE = 242
 
 
 class RestInterfaceAPI(AbstractAPI):
@@ -136,7 +140,7 @@ class AdminView(View):
   name = "admin"
   RULE_TEMPLATE = "/%s/admin/<any(%s):rpc>"
   prefix = CONFIG.get_rest_api_prefix()
-  rpcs = ("shutdown", "restart", "version", "update")
+  rpcs = ("shutdown", "restart", "update", "stop")
   methods = ('GET', 'POST')
   auth = HTTPBasicAuth()
   decorators = [auth.login_required]
@@ -186,14 +190,20 @@ class AdminView(View):
     return Response("SHUTDOWN accepted.\n", httplib.ACCEPTED)
 
   @staticmethod
+  def stop ():
+    call_as_coop_task(func=quit_with_code, ret_code=STOP_VALUE)
+    log.info("Shutdown task scheduled")
+    return Response("SHUTDOWN accepted.\n", httplib.ACCEPTED)
+
+  @staticmethod
   def restart ():
-    call_as_coop_task(func=quit_with_restart)
+    call_as_coop_task(func=quit_with_code, ret_code=RESTART_VALUE)
     log.info("Restart task scheduled")
     return Response("RESTART accepted.\n", httplib.ACCEPTED)
 
   @staticmethod
   def update ():
-    call_as_coop_task(func=quit_with_update)
+    call_as_coop_task(func=quit_with_code, ret_code=UPDATE_VALUE)
     log.info("Update task scheduled")
     return Response("UPDATE accepted.\n", httplib.ACCEPTED)
 
