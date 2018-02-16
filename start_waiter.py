@@ -40,7 +40,7 @@ with open(ESC_DEF_CFG) as f:
 if args.config:
   with open(args.config) as f:
     esc_cfg = yaml.safe_load(f)
-    for key in ('auth_user', 'auth_secret', 'prefix'):
+    for key in ('host', 'port', 'auth_user', 'auth_secret', 'prefix'):
       try:
         CONFIG[key] = esc_cfg['REST-API'][key]
       except KeyError:
