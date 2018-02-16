@@ -295,7 +295,7 @@ texinfo_documents = [(master_doc, 'ESCAPEv2', u'ESCAPEv2 Documentation', author,
 intersphinx_mapping = {
   'python': ('https://docs.python.org/2.7/', None),
   'ncclient': ('http://ncclient.readthedocs.io/en/latest/', None),
-  'networkx': ('http://networkx.readthedocs.io/en/networkx-1.11/', None),
+  'networkx': ('https://networkx.github.io/documentation/networkx-1.11/', None),
   'requests': ('http://docs.python-requests.org/en/latest/', None)
 }
 

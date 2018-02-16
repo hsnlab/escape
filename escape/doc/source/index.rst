@@ -446,7 +446,7 @@ used multiple times e.g. ``-dd`` or ``-d -d``.
 REST APIs
 =========
 
-ESCAPE has currently 4 REST-APIs.
+ESCAPE has currently 3 REST-APIs.
 
 The Service layer has a REST-API for communication with the users and/or a GUI.
 This API is initiated by default when its layer is started.
@@ -461,14 +461,15 @@ scenario or with a GUI.
 The Controller Adaptation layer also has a REST-API for mostly debugging purposes
 and define a direct interface to the Global topology view (DoV) for external components.
 
-The CfOr API realizes the interface for UNIFY's service elasticity feature.
-
-All the REST function path should contain the prefix value which is ``escape``
+All the REST function paths should contain the prefix value which is ``escape``
 by default and can be changed in the APIs' configuration.
+
+The differentiation of the APIs bases on the URL prefixes. The layer configuration
+name must be given in the URL. The listening port is ``8888`` by default.
 
 .. note::
 
-    The required format of the REST calls is the following: `http://<ip>:<port>/<prefix>/<operation>`
+    The required format of the REST calls is the following: `http://<ip>:<port>/<prefix>/<layer>/<operation>`
 
 
 Common API functions
@@ -495,7 +496,7 @@ the service request is loaded from the given file and the REST-API initiation is
 *Content Negotiation:* The Service layer's RESTful API can accept and return data
 in JSON format and in Virtualizer format too (need to set in the config).
 
-The following functions are defined in :any:`ServiceRequestHandler`.
+URL template: ``/service/<operation>``
 
 +-------------------+------------------+-------------------+----------------------------------------------------------------+
 |    Operation      |     Params       |     HTTP verbs    | Description                                                    |
@@ -512,7 +513,7 @@ ROS API specific functions
 
 Can be started with the ``--agent`` or ``--rosapi`` initial flags.
 
-The following functions are defined in :any:`Extended5GExRequestHandler`.
+URL template: ``/orchestration/<operation>``
 
 +----------------------+----------------+-------------------+-------------------------------------------+
 |    Operation         |     Params     |     HTTP verbs    | Description                               |
@@ -530,27 +531,12 @@ The following functions are defined in :any:`Extended5GExRequestHandler`.
 | */status*            | service id     | GET               | Returns the status of given service       |
 +----------------------+----------------+-------------------+-------------------------------------------+
 
-Cf-Or API specific functions
-----------------------------
-
-Can be started with the ``--cfor`` flag.
-
-The following functions are defined in :any:`CfOrRequestHandler`.
-
-+-------------------+----------------+-------------------+-----------------------------------------------------------------+
-|    Operation      |     Params     |     HTTP verbs    | Description                                                     |
-+===================+================+===================+=================================================================+
-| */get-config*     | ``None``       | GET, POST         | Returns with the resource view from the assigned Virtualizer    |
-+-------------------+----------------+-------------------+-----------------------------------------------------------------+
-| */edit-config*    | ``NFFG``       | POST              | Initiate given Virtualizer                                      |
-+-------------------+----------------+-------------------+-----------------------------------------------------------------+
-
 CAS API specific functions
 --------------------------
 
 Can be started with the ``--bypassapi`` flag.
 
-The following functions are defined in :any:`DirectDoVRequestHandler`.
+URL template: ``/adaptation/<operation>``
 
 +-------------------+----------------+-------------------+---------------------------------------------+
 |    Operation      |     Params     |     HTTP verbs    | Description                                 |
