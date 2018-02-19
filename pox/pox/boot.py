@@ -591,5 +591,7 @@ def boot (argv = None):
 
   try:
     pox.core.core.quit()
+  except SystemExit:
+    raise
   except:
     pass

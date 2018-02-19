@@ -30,6 +30,8 @@ import time
 import os
 import signal
 
+import sys
+
 _path = inspect.stack()[0][1]
 _ext_path = _path[0:_path.rindex(os.sep)]
 _ext_path = os.path.dirname(_ext_path) + os.sep
@@ -213,6 +215,11 @@ class POXCore (EventMixin):
                                       use_epoll=epoll_selecthub)
 
     self._waiters = [] # List of waiting components
+    self._return_value = 0
+
+  def set_return_value (self, value):
+    self._return_value = value
+    log.debug("Set return value: %s" % self._return_value)
 
   @property
   def banner (self):
@@ -280,13 +287,14 @@ class POXCore (EventMixin):
       t = threading.Thread(target=self._quit)
       t.daemon = True
       t.start()
-    else:
-      self._quit()
+      return
+    self._quit()
+    sys.exit(self._return_value)
 
   def _quit (self):
     # Should probably do locking here
     if not self.running:
-      return
+      sys.exit(self._return_value)
     if self.starting_up:
       # Try again later
       self.quit()
