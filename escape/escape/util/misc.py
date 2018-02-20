@@ -221,16 +221,12 @@ def quit_with_code (ret_code, msg=None, logger=None):
   :return: None
   """
   from pox.core import core
-
-  def _exit_handler (event):
-    core.set_return_value(ret_code)
-
   if isinstance(logger, str):
     logger = core.getLogger(logger)
   elif not isinstance(logger, logging.Logger):
     logger = core.getLogger("core")
   logger.info(msg if msg else "Exiting from ESCAPE...")
-  core.addListenerByName("DownEvent", _exit_handler)
+  core.set_return_value(ret_code)
   core.quit()
 
 
