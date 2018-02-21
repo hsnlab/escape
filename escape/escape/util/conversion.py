@@ -499,6 +499,9 @@ class NFFGConverter(object):
           infra_port_id = vport.id.get_value()
         # Add port properties as property to Infra port
         infra_port = infra.add_port(id=infra_port_id)
+        if vport.sap.is_initialized():
+          self.log.debug("Detected port as merged inter-domain port")
+          infra_port.add_property("type", "inter-domain")
         self.log.debug("Added infra port: %s" % infra_port)
         self.__copy_vport_attrs(port=infra_port, vport=vport)
         self.log.debug("Added static %s" % infra_port)
