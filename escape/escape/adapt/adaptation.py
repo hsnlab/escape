@@ -1430,6 +1430,10 @@ class ControllerAdapter(object):
     """
     domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
     new_ids = {infra.id for infra in topo_nffg.infras}
+    if domain_mgr is None:
+      log.error("No manager has been found for domain %s in %s"
+                % (domain, self.domains.domains))
+      return new_ids
     try:
       if new_ids:
         # Remove oneself from domains
@@ -1437,9 +1441,6 @@ class ControllerAdapter(object):
     except KeyError:
       log.warning("Detected domains does not include own BGP ID: %s" %
                   domain_mgr.bgp_domain_id)
-    except TypeError:
-      log.error("No manager has been found for domain %s in %s"
-                % (domain, self.domains.domains))
     return new_ids
 
   def _manage_external_domain_changes (self, event):
