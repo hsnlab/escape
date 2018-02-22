@@ -1437,6 +1437,9 @@ class ControllerAdapter(object):
     except KeyError:
       log.warning("Detected domains does not include own BGP ID: %s" %
                   domain_mgr.bgp_domain_id)
+    except TypeError:
+      log.error("No manager has been found for domain %s in %s"
+                % (domain, self.domains.domains))
     return new_ids
 
   def _manage_external_domain_changes (self, event):
