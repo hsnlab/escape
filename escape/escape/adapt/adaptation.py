@@ -239,6 +239,7 @@ class ComponentConfigurator(object):
     if not self.is_started(name):
       # Load from CONFIG
       mgr = self.load_component(name, params=mgr_params)
+      self.__repository[name] = mgr
       if mgr is not None:
         # Call init - give self for the DomainManager to initiate the
         # necessary DomainAdapters itself
@@ -248,7 +249,6 @@ class ComponentConfigurator(object):
           mgr.run()
         # Save into repository
         log.debug("Register DomainManager: %s into repository..." % name)
-        self.__repository[name] = mgr
     else:
       log.warning("%s domain component has been already started! Skip "
                   "reinitialization..." % name)
@@ -271,6 +271,7 @@ class ComponentConfigurator(object):
     if self.is_started(name=name):
       log.warning("DomainManager with name: %s has already exist! Skip init...")
       return
+    self.__repository[name] = mgr
     # Call init - give self for the DomainManager to initiate the
     # necessary DomainAdapters itself
     mgr.init(self)
@@ -278,7 +279,6 @@ class ComponentConfigurator(object):
     if autostart:
       mgr.run()
     # Save into repository
-    self.__repository[name] = mgr
 
   def stop_mgr (self, name):
     """
