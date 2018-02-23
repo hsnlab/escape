@@ -183,6 +183,7 @@ def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
 
   __setup_pythonpath()
   __init_loggers(loglevel=loglevel, log=log, test=test, log_folder=log_folder)
+  core_log.info("Load configuration....")
   __init_config(config=config, test=test, quit=quit)
   __print_header()
 

@@ -325,7 +325,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       log.debug("Updated revision number: %s"
                 % self.api_mgr.topology_revision)
       if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
-        log.debug("Convert internal NFFG to Virtualizer...")
+        log.info("Convert internal NFFG to Virtualizer...")
         res = self.api_mgr.converter.dump_to_Virtualizer(nffg=res)
       log.debug("Cache acquired topology...")
       self.api_mgr.last_response = res
@@ -376,7 +376,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     nffg.id = id
     if params:
       nffg.add_metadata(name="params", value=params)
-    log.debug("Proceeding request: %s to instantiation..." % id)
+    log.info("Proceeding request: %s to instantiation..." % id)
     if CONFIG.get_vnfm_enabled():
       deploy_status = self.controller_adapter.status_mgr.get_last_status()
       if deploy_status is None:

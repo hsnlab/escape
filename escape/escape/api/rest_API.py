@@ -373,6 +373,7 @@ class EditConfigView(AbstractAPIView):
     """
     :return:
     """
+    log.info("Received edit-config deploy request...")
     if not request.data:
       log.error("No data received!")
       return Response("Request data is missing!", httplib.BAD_REQUEST)

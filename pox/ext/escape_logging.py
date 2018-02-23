@@ -72,20 +72,20 @@ def setup_logging (test_mode=False, log_file=None, log_folder=None, **kwargs):
   if test_mode:
     # Define logger for test mode
     pox.log.launch(format=TEST_LOGGER_FORMAT)
-    log.info("Setup Logger - formatter: %s, level: %s"
-             % (pox.log.launch.__module__,
-                logging.getLevelName(log.getEffectiveLevel())))
+    log.debug("Setup Logger - formatter: %s, level: %s"
+              % (pox.log.launch.__module__,
+                 logging.getLevelName(log.getEffectiveLevel())))
     # Set default log_file to log in file in test mode
   else:
     # Define default logger
     pox.log.launch(format=DEFAULT_LOGGER_FORMAT)
-    log.info("Setup logger - formatter: %s, level: %s"
-             % (setup_logging.__module__,
-                logging.getLevelName(log.getEffectiveLevel())))
+    log.debug("Setup logger - formatter: %s, level: %s"
+              % (setup_logging.__module__,
+                 logging.getLevelName(log.getEffectiveLevel())))
   if log_file:
     # Define additional logger for logging to file
     pox.log.launch(format=FILE_LOGGER_FORMAT, file=log_file + ',w')
-    log.info("Setup Logger - formatter: %s, level: %s, file: %s"
-             % (pox.log.launch.__module__,
-                logging.getLevelName(log.getEffectiveLevel()),
-                log_file))
+    log.debug("Setup Logger - formatter: %s, level: %s, file: %s"
+              % (pox.log.launch.__module__,
+                 logging.getLevelName(log.getEffectiveLevel()),
+                 log_file))

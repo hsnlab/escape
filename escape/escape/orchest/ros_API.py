@@ -265,7 +265,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self.log.debug("Updated revision number: %s"
                      % self.api_mgr.topology_revision)
       if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
-        self.log.debug("Convert internal NFFG to Virtualizer...")
+        self.log.info("Convert internal NFFG to Virtualizer...")
         res = self.api_mgr.converter.dump_to_Virtualizer(nffg=res)
       log.debug("Cache acquired topology...")
       self.api_mgr.last_response = res
@@ -318,7 +318,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     nffg.id = id
     if params:
       nffg.add_metadata(name="params", value=params)
-    self.log.debug("Proceeding request: %s to instantiation..." % id)
+    self.log.info("Proceeding request: %s to instantiation..." % id)
     # Get resource view of the interface
     res = self.__get_slor_resource_view().get_resource_info()
     # ESCAPE serves as a global or proxy orchestrator

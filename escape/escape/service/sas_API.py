@@ -442,7 +442,7 @@ class ServiceLayerAPI(AbstractAPI):
       log.debug("Updated revision number: %s"
                 % self.api_mgr.topology_revision)
       if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
-        log.debug("Convert internal NFFG to Virtualizer...")
+        log.info("Convert internal NFFG to Virtualizer...")
         res = self.api_mgr.converter.dump_to_Virtualizer(nffg=res)
       log.debug("Cache acquired topology...")
       self.api_mgr.last_response = res

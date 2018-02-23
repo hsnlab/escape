@@ -127,7 +127,7 @@ class ESCAPEConfig(object):
     """
     # Load file
     path = os.path.join(PROJECT_ROOT, path)
-    log.info("Load default config from file: %s" % path)
+    log.debug("Load default config from file: %s" % path)
     self.__config = self._load_cfg_file(path=path)
 
   def load_config (self, config=None):
@@ -149,7 +149,7 @@ class ESCAPEConfig(object):
       return self
     if config:
       # Config is set directly
-      log.info("Load explicitly given config file: %s" % config)
+      log.debug("Load explicitly given config file: %s" % config)
     else:
       # No config file has been given
       log.debug("No additional configuration has been given!")
