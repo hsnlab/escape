@@ -288,6 +288,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
       # ESCAPE serves as a local orchestrator, probably with infrastructure
       # layer --> rewrite domain
       nffg = self.__update_nffg_domain(nffg_part=data)
+    # Get resource view of the interface
+    res = self.__get_slor_resource_view().get_resource_info()
     if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
       self.log.debug("Virtualizer format enabled! Start conversion step...")
       if CONFIG.get_rest_api_config(self._core_name)['diff']:
@@ -319,8 +321,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if params:
       nffg.add_metadata(name="params", value=params)
     self.log.info("Proceeding request: %s to instantiation..." % id)
-    # Get resource view of the interface
-    res = self.__get_slor_resource_view().get_resource_info()
     # ESCAPE serves as a global or proxy orchestrator
     self.__proceed_instantiation(nffg=nffg, resource_nffg=res)
     self.log.info("Preprocessing on %s ended!" % self.__class__.__name__)
