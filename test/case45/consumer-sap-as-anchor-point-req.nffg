@@ -1,0 +1,650 @@
+{
+  "parameters": {
+    "id": "0bdfecd7-1d54-11e8-9792-0242ac120005",
+    "name": "Single-BiSBiS-View",
+    "service_id": "SingleBiSBiS",
+    "version": "1.0",
+    "mode": "ADD"
+  },
+  "node_nfs": [
+    {
+      "id": "contentrequest01",
+      "name": "vCDN_contentRequesApp",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "INTERNET",
+          "addresses": {
+            "l4": "{'3001/tcp': ('', 3001), '1935/tcp': ('', 1935)}"
+          }
+        },
+        {
+          "id": 2,
+          "addresses": {
+            "l3": [
+              {
+                "id": "10.10.10.10/24",
+                "configure": "True",
+                "requested": "10.10.10.10/24"
+              }
+            ]
+          }
+        },
+        {
+          "id": 3,
+          "sap": "INTERNET-ETHdocker1",
+          "sap_data": {
+            "role": "consumer"
+          }
+        }
+      ],
+      "metadata": {
+        "command": "/bin/start.sh",
+        "environment": "{}",
+        "image": "5gex.tmit.bme.hu/content_request_app:latest",
+        "store_id": "7"
+      },
+      "functional_type": "docker",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 2.0,
+          "storage": 8.0
+        }
+      }
+    },
+    {
+      "id": "vcache01",
+      "name": "Virtual_vCDN_cache",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2,
+          "sap": "CACHE",
+          "sap_data": {
+            "role": "consumer"
+          }
+        }
+      ],
+      "metadata": {
+        "command": null,
+        "image": "http://nfs:8080/NFS/files/dummy_image.qcow2",
+        "store_id": "10"
+      },
+      "functional_type": "fe2sap",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 2.0,
+          "storage": 8.0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAPETHDDO",
+      "name": "SAPETHDDO",
+      "ports": [
+        {
+          "id": "SAPETHDDO",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPETHDDO"
+          },
+          "name": "SAPETHDDO",
+          "sap": "SAPETHDDO",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker1'}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP101",
+      "name": "SAP101",
+      "ports": [
+        {
+          "id": "SAP101",
+          "name": "SAP101"
+        }
+      ]
+    },
+    {
+      "id": "SAP100",
+      "name": "SAP100",
+      "ports": [
+        {
+          "id": "SAP100",
+          "name": "SAP100"
+        }
+      ]
+    },
+    {
+      "id": "INTERNET-ETHdocker1",
+      "name": "INTERNET-ETHdocker1",
+      "ports": [
+        {
+          "id": "INTERNET-ETHdocker1",
+          "property": {
+            "type": "inter-domain",
+            "sap": "INTERNET-ETHdocker1"
+          },
+          "sap": "INTERNET-ETHdocker1",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.210'}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INTERNET-ETHdocker2",
+      "name": "INTERNET-ETHdocker2",
+      "ports": [
+        {
+          "id": "INTERNET-ETHdocker2",
+          "property": {
+            "type": "inter-domain",
+            "sap": "INTERNET-ETHdocker2"
+          },
+          "sap": "INTERNET-ETHdocker2",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.211'}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPBMEETH",
+      "name": "SAPBMEETH",
+      "ports": [
+        {
+          "id": "SAPBMEETH",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPBMEETH"
+          },
+          "name": "SAPBMEETH",
+          "sap": "SAPBMEETH",
+          "sap_data": {
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPETHSSSA",
+      "name": "SAPETHSSSA",
+      "ports": [
+        {
+          "id": "SAPETHSSSA",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPETHSSSA"
+          },
+          "name": "SAPETHSSSA",
+          "sap": "SAPETHSSSA",
+          "sap_data": {
+            "resources": {
+              "delay": 20.0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPETHDDO2",
+      "name": "SAPETHDDO2",
+      "ports": [
+        {
+          "id": "SAPETHDDO2",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPETHDDO2"
+          },
+          "name": "SAPETHDDO2",
+          "sap": "SAPETHDDO2",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker2'}"
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS",
+      "name": "SingleBiSBiS",
+      "ports": [
+        {
+          "id": "SAPETHDDO",
+          "property": {
+            "sap": "SAPETHDDO"
+          },
+          "name": "SAPETHDDO",
+          "sap": "SAPETHDDO",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker1'}"
+          }
+        },
+        {
+          "id": "SAP101",
+          "name": "SAP101"
+        },
+        {
+          "id": "SAP100",
+          "name": "SAP100"
+        },
+        {
+          "id": "INTERNET-ETHdocker1",
+          "property": {
+            "sap": "INTERNET-ETHdocker1"
+          },
+          "sap": "INTERNET-ETHdocker1",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.210'}"
+          }
+        },
+        {
+          "id": "INTERNET-ETHdocker2",
+          "property": {
+            "sap": "INTERNET-ETHdocker2"
+          },
+          "sap": "INTERNET-ETHdocker2",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.211'}"
+          }
+        },
+        {
+          "id": "SAPBMEETH",
+          "property": {
+            "sap": "SAPBMEETH"
+          },
+          "name": "SAPBMEETH",
+          "sap": "SAPBMEETH",
+          "sap_data": {
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        },
+        {
+          "id": "SAPETHSSSA",
+          "property": {
+            "sap": "SAPETHSSSA"
+          },
+          "name": "SAPETHSSSA",
+          "sap": "SAPETHSSSA",
+          "sap_data": {
+            "resources": {
+              "delay": 20.0
+            }
+          }
+        },
+        {
+          "id": "SAPETHDDO2",
+          "property": {
+            "sap": "SAPETHDDO2"
+          },
+          "name": "SAPETHDDO2",
+          "sap": "SAPETHDDO2",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker2'}"
+          }
+        },
+        {
+          "id": "SingleBiSBiS|cache01|1"
+        },
+        {
+          "id": "SingleBiSBiS|cache01|2"
+        },
+        {
+          "id": "SingleBiSBiS|vcache01|1",
+          "flowrules": [
+            {
+              "id": 1,
+              "match": "in_port=SingleBiSBiS|vcache01|1",
+              "action": "output=SingleBiSBiS|contentrequest01|2"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|vcache01|2"
+        },
+        {
+          "id": "SingleBiSBiS|contentrequest01|1"
+        },
+        {
+          "id": "SingleBiSBiS|contentrequest01|2",
+          "flowrules": [
+            {
+              "id": 2,
+              "match": "in_port=SingleBiSBiS|contentrequest01|2",
+              "action": "output=SingleBiSBiS|vcache01|1",
+              "delay": 20.0
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|contentrequest01|3"
+        }
+      ],
+      "domain": "VIRTUAL",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "splitter",
+        "balance_emulator:latest",
+        "docker",
+        "dpi",
+        "fe2sap"
+      ],
+      "resources": {
+        "cpu": 10.0,
+        "mem": 102400.0,
+        "storage": 2048.0,
+        "delay": 0.0
+      },
+      "delay_matrix": {
+        "SAPETHDDO": {
+          "SAP101": 5.0,
+          "SAP100": 5.0,
+          "INTERNET-ETHdocker1": 5.0,
+          "INTERNET-ETHdocker2": 5.0,
+          "SAPBMEETH": 15.0,
+          "SAPETHSSSA": 25.0,
+          "SAPETHDDO2": 5.0
+        },
+        "SAP101": {
+          "SAPETHDDO": 5.0,
+          "SAP100": 5.0,
+          "INTERNET-ETHdocker1": 5.0,
+          "INTERNET-ETHdocker2": 0.0,
+          "SAPBMEETH": 15.0,
+          "SAPETHSSSA": 25.0,
+          "SAPETHDDO2": 0.0
+        },
+        "SAP100": {
+          "SAPETHDDO": 5.0,
+          "SAP101": 5.0,
+          "INTERNET-ETHdocker1": 5.0,
+          "INTERNET-ETHdocker2": 5.0,
+          "SAPBMEETH": 15.0,
+          "SAPETHSSSA": 25.0,
+          "SAPETHDDO2": 5.0
+        },
+        "INTERNET-ETHdocker1": {
+          "SAPETHDDO": 5.0,
+          "SAP101": 5.0,
+          "SAP100": 5.0,
+          "INTERNET-ETHdocker2": 5.0,
+          "SAPBMEETH": 15.0,
+          "SAPETHSSSA": 25.0,
+          "SAPETHDDO2": 5.0
+        },
+        "INTERNET-ETHdocker2": {
+          "SAPETHDDO": 5.0,
+          "SAP101": 0.0,
+          "SAP100": 5.0,
+          "INTERNET-ETHdocker1": 5.0,
+          "SAPBMEETH": 15.0,
+          "SAPETHSSSA": 25.0,
+          "SAPETHDDO2": 0.0
+        },
+        "SAPBMEETH": {
+          "SAPETHDDO": 15.0,
+          "SAP101": 15.0,
+          "SAP100": 15.0,
+          "INTERNET-ETHdocker1": 15.0,
+          "INTERNET-ETHdocker2": 15.0,
+          "SAPETHSSSA": 35.0,
+          "SAPETHDDO2": 15.0
+        },
+        "SAPETHSSSA": {
+          "SAPETHDDO": 25.0,
+          "SAP101": 25.0,
+          "SAP100": 25.0,
+          "INTERNET-ETHdocker1": 25.0,
+          "INTERNET-ETHdocker2": 25.0,
+          "SAPBMEETH": 35.0,
+          "SAPETHDDO2": 25.0
+        },
+        "SAPETHDDO2": {
+          "SAPETHDDO": 5.0,
+          "SAP101": 0.0,
+          "SAP100": 5.0,
+          "INTERNET-ETHdocker1": 5.0,
+          "INTERNET-ETHdocker2": 0.0,
+          "SAPBMEETH": 15.0,
+          "SAPETHSSSA": 25.0
+        }
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAPETHDDO-SingleBiSBiS-link",
+      "src_node": "SAPETHDDO",
+      "src_port": "SAPETHDDO",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPETHDDO"
+    },
+    {
+      "id": "SAP101-SingleBiSBiS-link",
+      "src_node": "SAP101",
+      "src_port": "SAP101",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAP101"
+    },
+    {
+      "id": "SAP100-SingleBiSBiS-link",
+      "src_node": "SAP100",
+      "src_port": "SAP100",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAP100"
+    },
+    {
+      "id": "SAPETHDDO-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPETHDDO",
+      "dst_node": "SAPETHDDO",
+      "dst_port": "SAPETHDDO",
+      "backward": true
+    },
+    {
+      "id": "SAP101-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAP101",
+      "dst_node": "SAP101",
+      "dst_port": "SAP101",
+      "backward": true
+    },
+    {
+      "id": "SAP100-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAP100",
+      "dst_node": "SAP100",
+      "dst_port": "SAP100",
+      "backward": true
+    },
+    {
+      "id": "INTERNET-ETHdocker1-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "INTERNET-ETHdocker1",
+      "dst_node": "INTERNET-ETHdocker1",
+      "dst_port": "INTERNET-ETHdocker1",
+      "backward": true
+    },
+    {
+      "id": "INTERNET-ETHdocker2-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "INTERNET-ETHdocker2",
+      "dst_node": "INTERNET-ETHdocker2",
+      "dst_port": "INTERNET-ETHdocker2",
+      "backward": true
+    },
+    {
+      "id": "SAPBMEETH-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPBMEETH",
+      "dst_node": "SAPBMEETH",
+      "dst_port": "SAPBMEETH",
+      "delay": 10.0,
+      "backward": true
+    },
+    {
+      "id": "SAPETHSSSA-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPETHSSSA",
+      "dst_node": "SAPETHSSSA",
+      "dst_port": "SAPETHSSSA",
+      "delay": 20.0,
+      "backward": true
+    },
+    {
+      "id": "0c178b45-1d54-11e8-9f91-0242ac120005",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|contentrequest01|2",
+      "dst_node": "contentrequest01",
+      "dst_port": 2,
+      "backward": true
+    },
+    {
+      "id": "0c174b21-1d54-11e8-ab50-0242ac120005",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|contentrequest01|1",
+      "dst_node": "contentrequest01",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "0c17bf91-1d54-11e8-b8ab-0242ac120005",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|contentrequest01|3",
+      "dst_node": "contentrequest01",
+      "dst_port": 3,
+      "backward": true
+    },
+    {
+      "id": "0c16c117-1d54-11e8-9abf-0242ac120005",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|vcache01|1",
+      "dst_node": "vcache01",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "0c16f491-1d54-11e8-b346-0242ac120005",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|vcache01|2",
+      "dst_node": "vcache01",
+      "dst_port": 2,
+      "backward": true
+    },
+    {
+      "id": "SAPETHDDO2-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPETHDDO2",
+      "dst_node": "SAPETHDDO2",
+      "dst_port": "SAPETHDDO2",
+      "backward": true
+    },
+    {
+      "id": "INTERNET-ETHdocker1-SingleBiSBiS-link",
+      "src_node": "INTERNET-ETHdocker1",
+      "src_port": "INTERNET-ETHdocker1",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "INTERNET-ETHdocker1"
+    },
+    {
+      "id": "INTERNET-ETHdocker2-SingleBiSBiS-link",
+      "src_node": "INTERNET-ETHdocker2",
+      "src_port": "INTERNET-ETHdocker2",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "INTERNET-ETHdocker2"
+    },
+    {
+      "id": "SAPBMEETH-SingleBiSBiS-link",
+      "src_node": "SAPBMEETH",
+      "src_port": "SAPBMEETH",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPBMEETH",
+      "delay": 10.0
+    },
+    {
+      "id": "SAPETHSSSA-SingleBiSBiS-link",
+      "src_node": "SAPETHSSSA",
+      "src_port": "SAPETHSSSA",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPETHSSSA",
+      "delay": 20.0
+    },
+    {
+      "id": "0c17bc54-1d54-11e8-bff0-0242ac120005",
+      "src_node": "contentrequest01",
+      "src_port": 3,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|contentrequest01|3"
+    },
+    {
+      "id": "0c1783cf-1d54-11e8-baa9-0242ac120005",
+      "src_node": "contentrequest01",
+      "src_port": 2,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|contentrequest01|2"
+    },
+    {
+      "id": "0c174763-1d54-11e8-a143-0242ac120005",
+      "src_node": "contentrequest01",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|contentrequest01|1"
+    },
+    {
+      "id": "0c16bd68-1d54-11e8-9580-0242ac120005",
+      "src_node": "vcache01",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|vcache01|1"
+    },
+    {
+      "id": "0c16f168-1d54-11e8-b498-0242ac120005",
+      "src_node": "vcache01",
+      "src_port": 2,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|vcache01|2"
+    },
+    {
+      "id": "SAPETHDDO2-SingleBiSBiS-link",
+      "src_node": "SAPETHDDO2",
+      "src_port": "SAPETHDDO2",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPETHDDO2"
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 2,
+      "src_node": "contentrequest01",
+      "src_port": 2,
+      "dst_node": "vcache01",
+      "dst_port": 1,
+      "delay": 20.0
+    },
+    {
+      "id": 1,
+      "src_node": "vcache01",
+      "src_port": 1,
+      "dst_node": "contentrequest01",
+      "dst_port": 2
+    }
+  ]
+}

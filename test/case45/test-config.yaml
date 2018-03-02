@@ -1,0 +1,25 @@
+service:
+    MAPPER:
+        mapping-enabled: false
+    SCHEDULED_SERVICE_REQUEST_DELAY: 0
+orchestration:
+    MAPPER:
+        mapping-enabled: true
+adaptation:
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    MANAGERS:
+    - DOV
+    DOV:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: DOV
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: NFFGBasedStaticFileAdapter
+                path: test/case45/consumer-sap-as-anchor-point-net.nffg
+                log_dir: test/case45
+                check_backward_links: true
+test:
+    timeout: 5
