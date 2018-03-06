@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import ast
 import logging
 
 import re
@@ -156,3 +157,7 @@ def is_identical (base, new):
   :rtype: bool
   """
   return is_empty(virtualizer=base.diff(new))
+
+
+def _res_parser (raw_str):
+  return ast.literal_eval(raw_str)

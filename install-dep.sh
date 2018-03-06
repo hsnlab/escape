@@ -105,10 +105,6 @@ function install_core {
     fi
     set -ue
 
-    info "=== Add neo4j repository ==="
-    sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
-    sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
-
     sudo apt-get install -y software-properties-common
 
     if [ "$DISTRIB_ID" = "Ubuntu" ]; then
@@ -144,6 +140,11 @@ function install_nfib_dep {
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
+    info "=== Add neo4j repository ==="
+    sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
+    sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
+
+    sudo apt-get update
     # Install Java 8 explicitly
     sudo apt-get install -y openjdk-${JAVA_VERSION}-jdk neo4j=${NEO4J_VERSION}
 

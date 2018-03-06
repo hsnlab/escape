@@ -20,6 +20,8 @@ import logging
 import re
 import sys
 
+from escape.util.virtualizer_helper import _res_parser
+
 try:
   # Import for ESCAPEv2
   from escape.nffg_lib.nffg import AbstractNFFG, NFFG, NodeSAP, NFFGToolBox, \
@@ -550,20 +552,21 @@ class NFFGConverter(object):
         else:
           nf_cost = None
         try:
-          nf_cpu = float(nf_cpu) if nf_cpu is not None else None
+          nf_cpu = _res_parser(nf_cpu) if nf_cpu is not None else None
         except ValueError as e:
           self.log.warning("Resource cpu value is not valid number: %s" % e)
         try:
-          nf_mem = float(nf_mem) if nf_mem is not None else None
+          nf_mem = _res_parser(nf_mem) if nf_mem is not None else None
         except ValueError as e:
           self.log.warning("Resource mem value is not valid number: %s" % e)
         try:
-          nf_storage = float(nf_storage) if nf_storage is not None else None
+          nf_storage = _res_parser(
+            nf_storage) if nf_storage is not None else None
         except ValueError as e:
           self.log.warning(
             "Resource storage value is not valid number: %s" % e)
         try:
-          nf_cost = float(nf_cost) if nf_cost is not None else None
+          nf_cost = _res_parser(nf_cost) if nf_cost is not None else None
         except ValueError as e:
           self.log.warning(
             "Resource cost value is not valid number: %s" % e)
@@ -1172,15 +1175,15 @@ class NFFGConverter(object):
         node_cost = vnode.resources.cost.get_value()
         node_zone = vnode.resources.zone.get_value()
         try:
-          node_cpu = float(node_cpu) if node_cpu is not None else None
+          node_cpu = _res_parser(node_cpu) if node_cpu is not None else None
         except ValueError as e:
           self.log.warning("Resource cpu value is not valid number: %s" % e)
         try:
-          node_mem = float(node_mem) if node_mem is not None else None
+          node_mem = _res_parser(node_mem) if node_mem is not None else None
         except ValueError as e:
           self.log.warning("Resource mem value is not valid number: %s" % e)
         try:
-          node_storage = float(
+          node_storage = _res_parser(
             node_storage) if node_storage is not None else None
         except ValueError as e:
           self.log.warning("Resource storage value is not valid number: %s" % e)
@@ -2044,10 +2047,10 @@ class NFFGConverter(object):
                          type=nf.functional_type,
                          status=nf.status,
                          resources=virt_lib.Software_resource(
-                           cpu=nf.resources.cpu,
-                           mem=nf.resources.mem,
-                           storage=nf.resources.storage,
-                           cost=nf.resources.cost,
+                           cpu=_res_parser(nf.resources.cpu),
+                           mem=_res_parser(nf.resources.mem),
+                           storage=_res_parser(nf.resources.storage),
+                           cost=_res_parser(nf.resources.cost),
                            zone=nf.resources.zone))
     # Set deployment type, delay, bandwidth as a metadata
     if nf.deployment_type is not None:
@@ -2866,9 +2869,10 @@ class UC3MNFFGConverter(object):
                                infra_type=NFFG.TYPE_INFRA_BISBIS)
         if 'resources' in node:
           # Add resources if detected node is not a bare Node
-          infra.resources.cpu = node['resources'].get('cpu')
-          infra.resources.mem = node['resources'].get('mem')
-          infra.resources.storage = node['resources'].get('storage')
+          infra.resources.cpu = _res_parser(node['resources'].get('cpu'))
+          infra.resources.mem = _res_parser(node['resources'].get('mem'))
+          infra.resources.storage = _res_parser(
+            node['resources'].get('storage'))
         # Add Infra BiSBiS metadata
         for meta in node['metadata']:
           self.log.log(level, "Add metadata to Infra node: %s" % meta)
