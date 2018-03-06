@@ -2314,9 +2314,11 @@ class NFFGConverter(object):
           # Process action field
           action = self._convert_flowrule_action(fr.action)
           # Process resource fields
-          _resources = virt_lib.Link_resource(delay=fr.delay,
-                                              bandwidth=fr.bandwidth,
-                                              cost=fr.cost, qos=fr.qos)
+          _resources = virt_lib.Link_resource(
+            delay=fr.delay if fr.delay else None,
+            bandwidth=fr.bandwidth if fr.bandwidth else None,
+            cost=fr.cost if fr.cost else None,
+            qos=fr.qos if fr.qos else None)
           # Flowrule name is not used
           v_fe_name = None
           # Add Flowentry with converted params
