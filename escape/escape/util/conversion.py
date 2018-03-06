@@ -2047,10 +2047,10 @@ class NFFGConverter(object):
                          type=nf.functional_type,
                          status=nf.status,
                          resources=virt_lib.Software_resource(
-                           cpu=_res_parser(nf.resources.cpu),
-                           mem=_res_parser(nf.resources.mem),
-                           storage=_res_parser(nf.resources.storage),
-                           cost=_res_parser(nf.resources.cost),
+                           cpu=nf.resources.cpu,
+                           mem=nf.resources.mem,
+                           storage=nf.resources.storage,
+                           cost=nf.resources.cost,
                            zone=nf.resources.zone))
     # Set deployment type, delay, bandwidth as a metadata
     if nf.deployment_type is not None:
