@@ -1,0 +1,612 @@
+{
+  "parameters": {
+    "id": "DoV",
+    "name": "DoV",
+    "version": "1.0"
+  },
+  "node_nfs": [
+    {
+      "id": "cache01",
+      "name": "vCDN_CACHE_01",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "INTERNET-ETHdocker1",
+          "sap_data": {
+            "role": "consumer"
+          },
+          "addresses": {
+            "l4": "{'8088/tcp': ('172.17.2.210', 8088), '8086/tcp': ('172.17.2.210', 8086), '8087/tcp': ('172.17.2.210', 8087)}"
+          }
+        },
+        {
+          "id": 2,
+          "sap": "CACHE",
+          "sap_data": {
+            "role": "provider"
+          },
+          "addresses": {
+            "l3": [
+              {
+                "id": "10.10.10.1/24",
+                "configure": "True",
+                "requested": "10.10.10.1/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "command": "/bin/start.sh",
+        "environment": "{'WSE_LIC':'ENGP4-ct4de-8EXrt-awhcd-E6tNV-fYbZE', 'WSE_MGR_USER':'wowza', 'WSE_MGR_PASS':'wowza'}                        ",
+        "image": "5gex.tmit.bme.hu/content_server:latest",
+        "store_id": "8"
+      },
+      "functional_type": "docker",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 2.0,
+          "storage": 8.0
+        }
+      }
+    },
+    {
+      "id": "cache02",
+      "name": "vCDN_CACHE_02",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "INTERNET-ETHdocker2",
+          "sap_data": {
+            "role": "consumer"
+          },
+          "addresses": {
+            "l4": "{'8088/tcp': ('172.17.2.211', 8088), '8086/tcp': ('172.17.2.211', 8086), '8087/tcp': ('172.17.2.211', 8087)}"
+          }
+        },
+        {
+          "id": 2,
+          "sap": "CACHE",
+          "sap_data": {
+            "role": "provider"
+          },
+          "addresses": {
+            "l3": [
+              {
+                "id": "10.10.10.1/24",
+                "configure": "True",
+                "requested": "10.10.10.1/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "command": "/bin/start.sh",
+        "environment": "{'WSE_LIC':'ENGP4-ct4de-8EXrt-awhcd-E6tNV-fYbZE', 'WSE_MGR_USER':'wowza', 'WSE_MGR_PASS':'wowza'}                        ",
+        "image": "5gex.tmit.bme.hu/content_server:latest",
+        "store_id": "8"
+      },
+      "functional_type": "docker",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 2.0,
+          "storage": 8.0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAPETHDDO",
+      "name": "SAPETHDDO",
+      "ports": [
+        {
+          "id": "SAPETHDDO",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPETHDDO"
+          },
+          "name": "SAPETHDDO",
+          "sap": "SAPETHDDO",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker1'}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP101",
+      "name": "SAP101",
+      "ports": [
+        {
+          "id": "SAP101",
+          "name": "SAP101"
+        }
+      ]
+    },
+    {
+      "id": "SAP100",
+      "name": "SAP100",
+      "ports": [
+        {
+          "id": "SAP100",
+          "name": "SAP100"
+        }
+      ]
+    },
+    {
+      "id": "INTERNET-ETHdocker1",
+      "name": "INTERNET-ETHdocker1",
+      "ports": [
+        {
+          "id": "INTERNET-ETHdocker1",
+          "property": {
+            "type": "inter-domain",
+            "sap": "INTERNET-ETHdocker1"
+          },
+          "sap": "INTERNET-ETHdocker1",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.210'}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "INTERNET-ETHdocker2",
+      "name": "INTERNET-ETHdocker2",
+      "ports": [
+        {
+          "id": "INTERNET-ETHdocker2",
+          "property": {
+            "type": "inter-domain",
+            "sap": "INTERNET-ETHdocker2"
+          },
+          "sap": "INTERNET-ETHdocker2",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.211'}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPBMEETH",
+      "name": "SAPBMEETH",
+      "ports": [
+        {
+          "id": "SAPBMEETH",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPBMEETH"
+          },
+          "name": "SAPBMEETH",
+          "sap": "SAPBMEETH",
+          "sap_data": {
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPETHSSSA",
+      "name": "SAPETHSSSA",
+      "ports": [
+        {
+          "id": "SAPETHSSSA",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPETHSSSA"
+          },
+          "name": "SAPETHSSSA",
+          "sap": "SAPETHSSSA",
+          "sap_data": {
+            "resources": {
+              "delay": 20.0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPETHDDO2",
+      "name": "SAPETHDDO2",
+      "ports": [
+        {
+          "id": "SAPETHDDO2",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPETHDDO2"
+          },
+          "name": "SAPETHDDO2",
+          "sap": "SAPETHDDO2",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker2'}"
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "DOCKER1@ETHdocker1",
+      "name": "ETHdocker1",
+      "ports": [
+        {
+          "id": "INTERNET-ETHdocker1",
+          "property": {
+            "sap": "INTERNET-ETHdocker1"
+          },
+          "sap": "INTERNET-ETHdocker1",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.210'}"
+          }
+        },
+        {
+          "id": "SAP100",
+          "name": "SAP100"
+        },
+        {
+          "id": "SAPBMEETH",
+          "property": {
+            "sap": "SAPBMEETH"
+          },
+          "name": "SAPBMEETH",
+          "sap": "SAPBMEETH",
+          "sap_data": {
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        },
+        {
+          "id": "SAPETHDDO",
+          "property": {
+            "sap": "SAPETHDDO"
+          },
+          "name": "SAPETHDDO",
+          "sap": "SAPETHDDO",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker1'}"
+          }
+        },
+        {
+          "id": "SAPETHDDO1DDO2",
+          "property": {
+            "sap": "SAPETHDDO1DDO2",
+            "type": "inter-domain"
+          },
+          "name": "SAPETHDDO1DDO2",
+          "sap": "SAPETHDDO1DDO2",
+          "sap_data": {
+            "resources": {
+              "delay": 0.0
+            }
+          }
+        },
+        {
+          "id": "SAPETHSSSA",
+          "property": {
+            "sap": "SAPETHSSSA"
+          },
+          "name": "SAPETHSSSA",
+          "sap": "SAPETHSSSA",
+          "sap_data": {
+            "resources": {
+              "delay": 20.0
+            }
+          }
+        },
+        {
+          "id": "DOCKER1@ETHdocker1|cache01|1"
+        },
+        {
+          "id": "DOCKER1@ETHdocker1|cache01|2"
+        }
+      ],
+      "domain": "ETHdocker1",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "docker",
+        "dpi",
+        "balance_emulator:latest",
+        "fe2sap",
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 51200.0,
+        "storage": 1024.0,
+        "delay": 5.0
+      },
+      "delay_matrix": {
+        "SAPBMEETH": {
+          "SAPETHDDO": 3.0,
+          "SAPETHSSSA": 5.0
+        },
+        "SAPETHDDO": {
+          "SAPBMEETH": 3.0,
+          "SAPETHSSSA": 4.0
+        },
+        "SAPETHSSSA": {
+          "SAPBMEETH": 5.0,
+          "SAPETHDDO": 4.0
+        }
+      }
+    },
+    {
+      "id": "DOCKER2@ETHdocker2",
+      "name": "ETHdocker2",
+      "ports": [
+        {
+          "id": "INTERNET-ETHdocker2",
+          "property": {
+            "sap": "INTERNET-ETHdocker2"
+          },
+          "sap": "INTERNET-ETHdocker2",
+          "sap_data": {
+            "role": "provider",
+            "technology": "{'if':'enp0s8', 'floating_ip':'172.17.2.211'}"
+          }
+        },
+        {
+          "id": "SAP101",
+          "name": "SAP101"
+        },
+        {
+          "id": "SAPETHDDO1DDO2",
+          "property": {
+            "sap": "SAPETHDDO1DDO2",
+            "type": "inter-domain"
+          },
+          "name": "SAPETHDDO1DDO2",
+          "sap": "SAPETHDDO1DDO2",
+          "sap_data": {
+            "resources": {
+              "delay": 0.0
+            }
+          }
+        },
+        {
+          "id": "SAPETHDDO2",
+          "property": {
+            "sap": "SAPETHDDO2"
+          },
+          "name": "SAPETHDDO2",
+          "sap": "SAPETHDDO2",
+          "sap_data": {
+            "technology": "{'if':'enp0s10','bridge':'br1-ETHdocker2'}"
+          }
+        },
+        {
+          "id": "DOCKER2@ETHdocker2|cache02|1"
+        },
+        {
+          "id": "DOCKER2@ETHdocker2|cache02|2"
+        }
+      ],
+      "domain": "ETHdocker2",
+      "type": "BiSBiS",
+      "supported": [
+        "docker",
+        "fe2sap",
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 51200.0,
+        "storage": 1024.0
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAPETHDDO-DOCKER1@ETHdocker1-link-back",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "SAPETHDDO",
+      "dst_node": "SAPETHDDO",
+      "dst_port": "SAPETHDDO",
+      "backward": true
+    },
+    {
+      "id": "SAP100-DOCKER1@ETHdocker1-link-back",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "SAP100",
+      "dst_node": "SAP100",
+      "dst_port": "SAP100",
+      "backward": true
+    },
+    {
+      "id": "INTERNET-ETHdocker1-DOCKER1@ETHdocker1-link-back",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "INTERNET-ETHdocker1",
+      "dst_node": "INTERNET-ETHdocker1",
+      "dst_port": "INTERNET-ETHdocker1",
+      "backward": true
+    },
+    {
+      "id": "SAPBMEETH-DOCKER1@ETHdocker1-link-back",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "SAPBMEETH",
+      "dst_node": "SAPBMEETH",
+      "dst_port": "SAPBMEETH",
+      "delay": 10.0,
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAPETHDDO1DDO2",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "SAPETHDDO1DDO2",
+      "dst_node": "DOCKER2@ETHdocker2",
+      "dst_port": "SAPETHDDO1DDO2",
+      "delay": 0.0
+    },
+    {
+      "id": "3682402b-204e-11e8-9e55-0242ac120004",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "DOCKER1@ETHdocker1|cache01|1",
+      "dst_node": "cache01",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "36827999-204e-11e8-ba06-0242ac120004",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "DOCKER1@ETHdocker1|cache01|2",
+      "dst_node": "cache01",
+      "dst_port": 2,
+      "backward": true
+    },
+    {
+      "id": "SAPETHSSSA-DOCKER1@ETHdocker1-link-back",
+      "src_node": "DOCKER1@ETHdocker1",
+      "src_port": "SAPETHSSSA",
+      "dst_node": "SAPETHSSSA",
+      "dst_port": "SAPETHSSSA",
+      "delay": 20.0,
+      "backward": true
+    },
+    {
+      "id": "SAPETHDDO-DOCKER1@ETHdocker1-link",
+      "src_node": "SAPETHDDO",
+      "src_port": "SAPETHDDO",
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "SAPETHDDO"
+    },
+    {
+      "id": "SAP101-DOCKER2@ETHdocker2-link",
+      "src_node": "SAP101",
+      "src_port": "SAP101",
+      "dst_node": "DOCKER2@ETHdocker2",
+      "dst_port": "SAP101"
+    },
+    {
+      "id": "SAP100-DOCKER1@ETHdocker1-link",
+      "src_node": "SAP100",
+      "src_port": "SAP100",
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "SAP100"
+    },
+    {
+      "id": "INTERNET-ETHdocker1-DOCKER1@ETHdocker1-link",
+      "src_node": "INTERNET-ETHdocker1",
+      "src_port": "INTERNET-ETHdocker1",
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "INTERNET-ETHdocker1"
+    },
+    {
+      "id": "INTERNET-ETHdocker2-DOCKER2@ETHdocker2-link",
+      "src_node": "INTERNET-ETHdocker2",
+      "src_port": "INTERNET-ETHdocker2",
+      "dst_node": "DOCKER2@ETHdocker2",
+      "dst_port": "INTERNET-ETHdocker2"
+    },
+    {
+      "id": "SAPBMEETH-DOCKER1@ETHdocker1-link",
+      "src_node": "SAPBMEETH",
+      "src_port": "SAPBMEETH",
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "SAPBMEETH",
+      "delay": 10.0
+    },
+    {
+      "id": "SAPETHSSSA-DOCKER1@ETHdocker1-link",
+      "src_node": "SAPETHSSSA",
+      "src_port": "SAPETHSSSA",
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "SAPETHSSSA",
+      "delay": 20.0
+    },
+    {
+      "id": "36823bd4-204e-11e8-a8df-0242ac120004",
+      "src_node": "cache01",
+      "src_port": 1,
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "DOCKER1@ETHdocker1|cache01|1"
+    },
+    {
+      "id": "368275e1-204e-11e8-ad99-0242ac120004",
+      "src_node": "cache01",
+      "src_port": 2,
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "DOCKER1@ETHdocker1|cache01|2"
+    },
+    {
+      "id": "36af68de-204e-11e8-a42b-0242ac120004",
+      "src_node": "cache02",
+      "src_port": 2,
+      "dst_node": "DOCKER2@ETHdocker2",
+      "dst_port": "DOCKER2@ETHdocker2|cache02|2"
+    },
+    {
+      "id": "36af2428-204e-11e8-a5b8-0242ac120004",
+      "src_node": "cache02",
+      "src_port": 1,
+      "dst_node": "DOCKER2@ETHdocker2",
+      "dst_port": "DOCKER2@ETHdocker2|cache02|1"
+    },
+    {
+      "id": "SAPETHDDO2-DOCKER2@ETHdocker2-link",
+      "src_node": "SAPETHDDO2",
+      "src_port": "SAPETHDDO2",
+      "dst_node": "DOCKER2@ETHdocker2",
+      "dst_port": "SAPETHDDO2"
+    },
+    {
+      "id": "inter-domain-link-SAPETHDDO1DDO2-back",
+      "src_node": "DOCKER2@ETHdocker2",
+      "src_port": "SAPETHDDO1DDO2",
+      "dst_node": "DOCKER1@ETHdocker1",
+      "dst_port": "SAPETHDDO1DDO2",
+      "delay": 0.0,
+      "backward": true
+    },
+    {
+      "id": "INTERNET-ETHdocker2-DOCKER2@ETHdocker2-link-back",
+      "src_node": "DOCKER2@ETHdocker2",
+      "src_port": "INTERNET-ETHdocker2",
+      "dst_node": "INTERNET-ETHdocker2",
+      "dst_port": "INTERNET-ETHdocker2",
+      "backward": true
+    },
+    {
+      "id": "36af289c-204e-11e8-b437-0242ac120004",
+      "src_node": "DOCKER2@ETHdocker2",
+      "src_port": "DOCKER2@ETHdocker2|cache02|1",
+      "dst_node": "cache02",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "36af6cbd-204e-11e8-bb0f-0242ac120004",
+      "src_node": "DOCKER2@ETHdocker2",
+      "src_port": "DOCKER2@ETHdocker2|cache02|2",
+      "dst_node": "cache02",
+      "dst_port": 2,
+      "backward": true
+    },
+    {
+      "id": "SAPETHDDO2-DOCKER2@ETHdocker2-link-back",
+      "src_node": "DOCKER2@ETHdocker2",
+      "src_port": "SAPETHDDO2",
+      "dst_node": "SAPETHDDO2",
+      "dst_port": "SAPETHDDO2",
+      "backward": true
+    },
+    {
+      "id": "SAP101-DOCKER2@ETHdocker2-link-back",
+      "src_node": "DOCKER2@ETHdocker2",
+      "src_port": "SAP101",
+      "dst_node": "SAP101",
+      "dst_port": "SAP101",
+      "backward": true
+    }
+  ]
+}
