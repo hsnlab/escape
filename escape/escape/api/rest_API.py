@@ -139,7 +139,7 @@ class AdminView(View):
   ADMIN_PREFIX = "_admin_"
   name = "admin"
   RULE_TEMPLATE = ("/%s/admin/<any(shutdown,restart,update,stop):rpc>",
-                   "/%s/admin/<any(update):rpc>/<param>")
+                   "/%s/admin/<any(update):rpc>/<string:param>")
   prefix = CONFIG.get_rest_api_prefix()
   rpcs = ("shutdown", "restart", "update", "stop")
   methods = ('GET', 'POST')

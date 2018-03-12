@@ -1440,8 +1440,8 @@ class AbstractRESTAdapter(Session):
                 % (self.name, self._base_url, e))
       return None
     except HTTPError as e:
-      log.error("Remote agent(adapter: %s, url: %s) responded with an error: %s"
-                % (self.name, self._base_url, e.message))
+      log.error("Remote agent(adapter: %s, url: %s) responded with an HTTP "
+                "error: %s" % (self.name, self._base_url, e.message))
       return None
     except Timeout:
       raise
