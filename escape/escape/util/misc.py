@@ -438,7 +438,7 @@ def get_escape_version ():
   # Only match version tag like v2.0.0
   # cmd = "git describe --always --first-parent --tags --match v*"
   with open(os.devnull, 'wb') as DEVNULL:
-    desc = Popen("git describe --always --tags",
+    desc = Popen("git describe --always --tags --match P*.*",
                  stdout=PIPE,
                  stderr=DEVNULL,
                  shell=True).communicate()[0].strip()
@@ -448,7 +448,7 @@ def get_escape_version ():
     return __version__
   else:
     # If no tag is defined in the repo
-    if not desc.count('-'):
+    if not desc.count('.'):
       return "2.0.0-%s" % desc
     else:
       return desc
