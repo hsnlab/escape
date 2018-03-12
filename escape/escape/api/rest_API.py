@@ -138,7 +138,8 @@ class RestInterfaceAPI(AbstractAPI):
 class AdminView(View):
   ADMIN_PREFIX = "_admin_"
   name = "admin"
-  RULE_TEMPLATE = "/%s/admin/<any(%s):rpc>"
+  RULE_TEMPLATE = ("/%s/admin/<any(shutdown,restart,update,stop):rpc>",
+                   "/%s/admin/<any(update):rpc>/<param>")
   prefix = CONFIG.get_rest_api_prefix()
   rpcs = ("shutdown", "restart", "update", "stop")
   methods = ('GET', 'POST')
@@ -160,9 +161,11 @@ class AdminView(View):
       return CONFIG.get_rest_api_secret()
     log.error("Invalid username!")
 
-  def dispatch_request (self, rpc):
+  def dispatch_request (self, rpc, param=None):
     if rpc not in self.rpcs:
       return Response(status=httplib.NOT_IMPLEMENTED)
+    elif param is not None:
+      return getattr(self, rpc)(param=param)
     else:
       return getattr(self, rpc)()
 
@@ -173,15 +176,16 @@ class AdminView(View):
                      endpoint="admin/version",
                      view_func=cls.version)
     log.debug("Registered rule: %s" % rule)
-    rule = cls.RULE_TEMPLATE % (cls.prefix, ','.join(cls.rpcs))
-    app.add_url_rule(rule=rule,
-                     endpoint=cls.name,
-                     view_func=cls.as_view(name=cls.name))
-    log.debug("Registered rule: %s" % rule)
+    for r in cls.RULE_TEMPLATE:
+      rule = r % cls.prefix
+      app.add_url_rule(rule=rule,
+                       endpoint=rule,
+                       view_func=cls.as_view(name=cls.name))
+      log.debug("Registered rule: %s" % rule)
 
   @staticmethod
   def version ():
-    return Response(get_escape_version())
+    return Response(get_escape_version() + "\n")
 
   @staticmethod
   def shutdown ():
@@ -202,10 +206,16 @@ class AdminView(View):
     return Response("RESTART accepted.\n", httplib.ACCEPTED)
 
   @staticmethod
-  def update ():
+  def update (param=None):
     call_as_coop_task(func=quit_with_code, ret_code=UPDATE_VALUE)
-    log.info("Update task scheduled")
-    return Response("UPDATE accepted.\n", httplib.ACCEPTED)
+    if param is not None:
+      with open(".checkout", 'w') as f:
+        f.write(param)
+        log.info("Update task scheduled with explicit checkpoint: %s" % param)
+        return Response("UPDATE accepted (%s).\n" % param, httplib.ACCEPTED)
+    else:
+      log.info("Update task scheduled")
+      return Response("UPDATE accepted.\n", httplib.ACCEPTED)
 
 
 class MainApiServer(object):

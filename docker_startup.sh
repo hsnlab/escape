@@ -19,7 +19,8 @@ STOP_VALUE=242
 
 function update() {
     echo "Updating ESCAPE source base..."
-    git pull
+    git fetch --recurse-submodules --tags
+    git checkout "${1-master}"
     git submodule update
 }
 
@@ -32,7 +33,12 @@ do
     if [ ${ret_value} -eq ${RESTART_VALUE} ]; then
         echo "Restarting..."
     elif [ ${ret_value} -eq ${UPDATE_VALUE} ]; then
-        update
+    if [ -f ./.checkout ]; then
+            update $(cat ./.checkout)
+            rm ./.checkout
+        else
+            update
+        fi
     elif [ ${ret_value} -eq ${STOP_VALUE} ]; then
         python start_waiter.py ${@}
         if [ ${?} -ne 0 ]; then

@@ -448,10 +448,7 @@ def get_escape_version ():
     return __version__
   else:
     # If no tag is defined in the repo
-    if not desc.count('-'):
-      return "2.0.0-%s" % desc
-    else:
-      return desc
+    return desc
 
 
 def get_escape_branch_name ():
