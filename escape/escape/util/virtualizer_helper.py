@@ -160,4 +160,8 @@ def is_identical (base, new):
 
 
 def _res_parser (raw_str):
-  return ast.literal_eval(raw_str)
+  try:
+    digits = filter(lambda c: c.isdigit() or c == '.', raw_str)
+    return ast.literal_eval(digits)
+  except SyntaxError:
+    pass
