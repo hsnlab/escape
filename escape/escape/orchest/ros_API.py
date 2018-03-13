@@ -535,7 +535,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         return
       else:
         log.debug("Difference calculation resulted empty subNFFGs!")
-        log.info("No change has been detected in request! Skip mapping...")
+        log.warning("No change has been detected in request! Skip mapping...")
         self.log.debug("Invoked instantiation on %s is finished!"
                        % self.__class__.__name__)
         self.__process_mapping_result(nffg_id=nffg.id, fail=False)
