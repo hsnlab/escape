@@ -217,7 +217,7 @@ class MessageDumper(object):
     self.log_dir = self.DIR + time.strftime("%Y%m%d%H%M%S")
     for i in xrange(1, 10):
       if not os.path.exists(self.log_dir):
-        os.mkdir(self.log_dir)
+        os.makedirs(self.log_dir)
         break
       else:
         self.log_dir += "+"
