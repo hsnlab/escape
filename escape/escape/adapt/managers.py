@@ -747,8 +747,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       self.log.warning("Domain: %s is not detected! Skip domain cleanup..."
                        % self.domain_name)
       return True
-    empty_cfg = self.topoAdapter.get_original_topology()
-    if empty_cfg is None:
+    latest_cfg = self.topoAdapter.get_original_topology()
+    if latest_cfg is None:
       self.log.warning("Missing original topology in %s domain! "
                        "Skip domain resetting..." % self.domain_name)
       return
@@ -757,23 +757,21 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
-    if not self.polling and self._diff:
+    if not self.polling:
       self.log.debug("Polling is disabled. Requesting the most recent topology "
                      "from domain: %s for domain clearing..." %
                      self.domain_name)
-      recent_topo = self.topoAdapter.get_config()
-      if recent_topo is not None:
-        self.log.debug("Strip original topology...")
-        empty_cfg = self._strip_virtualizer_topology(virtualizer=empty_cfg)
-        self.log.debug("Explicitly calculating diff for domain clearing...")
-        diff = recent_topo.diff(empty_cfg)
-        status = self.topoAdapter.edit_config(data=diff, diff=False)
-      else:
-        self.log.error("Skip domain resetting: %s! "
-                       "Requested topology is missing!" % self.domain_name)
-        return False
-    else:
-      status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+      latest_cfg = self.topoAdapter.get_config()
+    self.log.debug("Strip original topology...")
+    empty_cfg = self._strip_virtualizer_topology(virtualizer=latest_cfg)
+    if empty_cfg is None:
+      self.log.error("Skip domain resetting: %s! "
+                     "Requested topology is missing!" % self.domain_name)
+      return False
+    if self._diff:
+      self.log.debug("Explicitly calculating diff for domain clearing...")
+      empty_cfg = latest_cfg.diff(empty_cfg)
+    status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
     return True if status is not None else False
 
   def reset_domain (self):
