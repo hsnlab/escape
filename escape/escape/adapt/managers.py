@@ -751,26 +751,23 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     if latest_cfg is None:
       self.log.warning("Missing original topology in %s domain! "
                        "Skip domain resetting..." % self.domain_name)
-      return
+      return False
     self.log.info("Clear %s domain based on original topology description..." %
                   self.domain_name)
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
-    if not self.polling:
+    if not self.polling and self._diff:
       self.log.debug("Polling is disabled. Requesting the most recent topology "
                      "from domain: %s for domain clearing..." %
                      self.domain_name)
       latest_cfg = self.topoAdapter.get_config()
-    self.log.debug("Strip original topology...")
-    empty_cfg = self._strip_virtualizer_topology(virtualizer=latest_cfg)
-    if empty_cfg is None:
+    if latest_cfg is None:
       self.log.error("Skip domain resetting: %s! "
                      "Requested topology is missing!" % self.domain_name)
       return False
-    if self._diff:
-      self.log.debug("Explicitly calculating diff for domain clearing...")
-      empty_cfg = latest_cfg.diff(empty_cfg)
+    self.log.debug("Strip original topology...")
+    empty_cfg = self._strip_virtualizer_topology(virtualizer=latest_cfg)
     status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
     return True if status is not None else False
 
