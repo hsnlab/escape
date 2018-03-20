@@ -32,7 +32,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: OPENSTACK
         diff: true
-        poll: false
+        poll: true
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -57,7 +57,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: UN
         diff: true
-        poll: false
+        poll: true
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
