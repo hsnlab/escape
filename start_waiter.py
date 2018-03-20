@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # Copyright 2018 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
