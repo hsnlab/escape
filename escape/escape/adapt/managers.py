@@ -731,8 +731,13 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     for node in virtualizer.nodes:
       # Remove NFs
+      log.debug("Removing NFs: %s from %s" % (node.NF_instances.node.keys(),
+                                              node.id.get_value()))
       node.NF_instances.node._data.clear()
       # Remove flowrules
+      log.debug(
+        "Removing Flowrules: %s from %s" % (node.flowtable.flowentry.keys(),
+                                            node.id.get_value()))
       node.flowtable.flowentry._data.clear()
     return virtualizer
 
@@ -747,8 +752,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       self.log.warning("Domain: %s is not detected! Skip domain cleanup..."
                        % self.domain_name)
       return True
-    empty_cfg = self.topoAdapter.get_original_topology()
-    if empty_cfg is None:
+    current_topo = self.topoAdapter.last_virtualizer
+    if current_topo is None:
       self.log.warning("Missing original topology in %s domain! "
                        "Skip domain resetting..." % self.domain_name)
       return
@@ -761,12 +766,12 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       self.log.debug("Polling is disabled. Requesting the most recent topology "
                      "from domain: %s for domain clearing..." %
                      self.domain_name)
-      recent_topo = self.topoAdapter.get_config()
-      if recent_topo is not None:
+      current_topo = self.topoAdapter.get_config()
+      if current_topo is not None:
         self.log.debug("Strip original topology...")
-        empty_cfg = self._strip_virtualizer_topology(virtualizer=empty_cfg)
+        empty_cfg = self._strip_virtualizer_topology(virtualizer=current_topo)
         self.log.debug("Explicitly calculating diff for domain clearing...")
-        diff = recent_topo.diff(empty_cfg)
+        diff = current_topo.diff(empty_cfg)
         status = self.topoAdapter.edit_config(data=diff, diff=False)
       else:
         self.log.error("Skip domain resetting: %s! "
@@ -774,7 +779,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         return False
     else:
       self.log.debug("Strip original topology...")
-      empty_cfg = self._strip_virtualizer_topology(virtualizer=empty_cfg)
+      empty_cfg = self._strip_virtualizer_topology(virtualizer=current_topo)
       status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
     return True if status is not None else False
 
