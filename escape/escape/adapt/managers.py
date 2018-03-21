@@ -779,7 +779,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         return False
     else:
       self.log.debug("Strip original topology...")
-      empty_cfg = self._strip_virtualizer_topology(virtualizer=current_topo)
+      empty_cfg = self._strip_virtualizer_topology(
+        virtualizer=current_topo.yang_copy())
+      print current_topo.xml()
+      print empty_cfg.xml()
       status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
     return True if status is not None else False
 
