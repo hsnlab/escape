@@ -2,10 +2,10 @@
 # Dockerfile to build minimal ESCAPE MdO Container
 ################################################################################
 FROM python:2.7.14-alpine
-MAINTAINER Janos Czentye <czentye@tmit.bme.hu>
 ARG GIT_REVISION=unknown
 LABEL git-revision=$GIT_REVISION    
-LABEL Description="ESCAPE" Project="5GEx" version="2.0.0+"
+LABEL Maintainer="Janos Czentye <czentye@tmit.bme.hu>" \
+      Description="ESCAPE" Project="5GEx" version="2.0.0+"
 WORKDIR /opt/escape
 ENV PYTHONUNBUFFERED=1 LANG=C.UTF-8
 COPY . ./
