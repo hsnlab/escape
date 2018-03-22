@@ -38,6 +38,53 @@
                     <sap>SAP24</sap>
                 </port>
             </ports>
+            <NF_instances>
+                <node>
+                    <id>splitter</id>
+                    <name>splitter</name>
+                    <type>splitter</type>
+                    <ports>
+                        <port>
+                            <id>1</id>
+                            <name>input</name>
+                            <port_type>port-abstract</port_type>
+                        </port>
+                        <port>
+                            <id>2</id>
+                            <name>output1</name>
+                            <port_type>port-abstract</port_type>
+                        </port>
+                        <port>
+                            <id>3</id>
+                            <name>output2</name>
+                            <sap>INTERNET:SAAAAAAAP3</sap>
+                            <port_type>port-sap</port_type>
+                            <sap_data>
+                                <role>provider</role>
+                            </sap_data>
+                        </port>
+                    </ports>
+                    <links>
+                        <link>
+                            <id>1</id>
+                            <name>1-2</name>
+                            <src>../../../ports/port[id=1]</src>
+                            <dst>../../../ports/port[id=2]</dst>
+                        </link>
+                        <link>
+                            <id>2</id>
+                            <name>1-3</name>
+                            <src>../../../ports/port[id=1]</src>
+                            <dst>../../../ports/port[id=3]</dst>
+                        </link>
+                    </links>
+                    <resources>
+                        <cpu>1.0</cpu>
+                        <mem>1.0</mem>
+                        <storage>0.0</storage>
+                    </resources>
+                </node>
+            </NF_instances>
             <resources>
                 <cpu>4</cpu>
                 <mem>50721017856</mem>
