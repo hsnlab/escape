@@ -24,6 +24,8 @@ function update() {
     git submodule update
 }
 
+#echo -e "152.66.246.230\t5gexgit.tmit.bme.hu" >> /etc/hosts
+
 while true
 do
     echo "Received params: $@"

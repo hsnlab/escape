@@ -15,9 +15,8 @@ RUN apk add --repository http://dl-3.alpinelinux.org/alpine/edge/community/ \
 RUN pip install --no-cache-dir -U $(grep -v -e \# -e numpy requirements.txt)
 # Setup git and pull the latest updates
 RUN ln -vfs .gitmodules.5gex .gitmodules && \
-    echo -e "152.66.246.230\t5gexgit.tmit.bme.hu" | tee -a /etc/hosts && \
     git remote set-url origin git@5gexgit.tmit.bme.hu:unify/escape.git && \
-    cp -r docker/demo ~/.ssh && chmod 600 ~/.ssh/*
+    cp -r docker/demo ~/.ssh && chmod 600 ~/.ssh/* && chmod 644 ~/.ssh/known_hosts
 EXPOSE 8888 9000
 STOPSIGNAL SIGINT
 ENTRYPOINT ["./docker_startup.sh"]
