@@ -22,7 +22,8 @@ trap term_handler INT TERM STOP
 ESCAPE_PID=""
 
 function term_handler() {
-    kill -s INT ${ESCAPE_PID}
+    echo "Terminating ESCAPE process: $ESCAPE_PID"
+    kill -SIGTERM ${ESCAPE_PID}
 }
 
 function update() {
@@ -39,6 +40,7 @@ do
     echo "Received params: $@"
     python escape.py ${@} &
     ESCAPE_PID=${!}
+    echo "ESCAPE PID: $ESCAPE_PID"
     wait ${ESCAPE_PID}
     ret_value=${?}
     echo "Received exit code from ESCAPE: $ret_value"
