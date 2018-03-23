@@ -17,6 +17,14 @@ RESTART_VALUE=42
 UPDATE_VALUE=142
 STOP_VALUE=242
 
+trap term_handler INT TERM STOP
+
+ESCAPE_PID=""
+
+function term_handler() {
+    kill -s INT ${ESCAPE_PID}
+}
+
 function update() {
     echo "Updating ESCAPE source base..."
     git fetch --recurse-submodules --tags
@@ -29,7 +37,9 @@ echo -e "152.66.246.230\t5gexgit.tmit.bme.hu" >> /etc/hosts
 while true
 do
     echo "Received params: $@"
-    python escape.py ${@}
+    python escape.py ${@} &
+    ESCAPE_PID=${!}
+    wait ${ESCAPE_PID}
     ret_value=${?}
     echo "Received exit code from ESCAPE: $ret_value"
     if [ ${ret_value} -eq ${RESTART_VALUE} ]; then
