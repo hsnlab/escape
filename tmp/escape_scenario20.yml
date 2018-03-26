@@ -1,0 +1,425 @@
+REST-API:
+    host: 0.0.0.0
+    port: 8888
+    prefix: escape
+service:
+    MAPPER:
+        mapping-enabled: false
+    REST-API:
+        module: escape.service.sas_API
+        class: ServiceRequestHandler
+        address: 0.0.0.0
+        port: 8000
+        prefix: escape
+    SERVICE-LAYER-ID: ESCAPE-SERVICE
+orchestration:
+    ESCAPE-SERVICE:
+        virtualizer_type: SINGLE
+    Sl-Or:
+        module: escape.orchest.ros_API
+        class: Extended5GExRequestHandler
+        address: 0.0.0.0
+        port: 10000
+        prefix: escape
+        virtualizer_type: SINGLE
+adaptation:
+    CALLBACK:
+        address: 0.0.0.0
+        port: 9000
+        timeout: 10000
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: false
+        ROLLBACK-ON-FAILURE: false
+    MANAGERS:
+    - SW1
+    - SW2
+    - SW3
+    - SW4
+    - COMPUTE1
+    - COMPUTE2
+    - COMPUTE3
+    - COMPUTE4
+    - EDGE0
+    - EDGE1
+    - EDGE2
+    - EDGE3
+    - EDGE4
+    - EDGE5
+    - EDGE6
+    - EDGE7
+    - EDGE8
+    - EDGE9
+    - EDGE10
+    - EDGE11
+    - EDGE12
+    - EDGE13
+    - EDGE14
+    - EDGE15
+    - EDGE16
+    - EDGE17
+    - EDGE18
+    - EDGE19
+    SW1:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: SW1
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_SW1.xml
+                diff: true
+    SW2:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: SW2
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_SW2.xml
+                diff: true
+    SW3:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: SW3
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_SW3.xml
+                diff: true
+    SW4:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: SW4
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_SW4.xml
+                diff: true
+    COMPUTE1:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: COMPUTE1
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_COMPUTE1.xml
+                diff: true
+    COMPUTE2:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: COMPUTE2
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_COMPUTE2.xml
+                diff: true
+    COMPUTE3:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: COMPUTE3
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_COMPUTE3.xml
+                diff: true
+    COMPUTE4:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: COMPUTE4
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_COMPUTE4.xml
+                diff: true
+    EDGE0:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE0
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE0.xml
+                diff: true
+    EDGE1:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE1
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+             REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE1.xml
+                diff: true
+    EDGE2:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE2
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE2.xml
+                diff: true
+    EDGE3:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE3
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE3.xml
+                diff: true
+    EDGE4:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE4
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE4.xml
+                diff: true
+    EDGE5:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE5
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE5.xml
+                diff: true
+    EDGE6:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE6
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE6.xml
+                diff: true
+    EDGE7:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE7
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE7.xml
+                diff: true
+    EDGE8:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE8
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE8.xml
+                diff: true
+    EDGE9:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE9
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE9.xml
+                diff: true
+    EDGE10:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE10
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE10.xml
+                diff: true
+    EDGE11:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE11
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE11.xml
+                diff: true
+    EDGE12:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE12
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE12.xml
+                diff: true
+    EDGE13:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE13
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE13.xml
+                diff: true
+    EDGE14:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE14
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE14.xml
+                diff: true
+    EDGE15:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE15
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE15.xml
+                diff: true
+    EDGE16:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE16
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE16.xml
+                diff: true
+    EDGE17:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE17
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE17.xml
+                diff: true
+    EDGE18:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE18
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE18.xml
+                diff: true
+    EDGE19:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: EDGE19
+        diff: true
+        poll: false
+        keepalive: false
+        adapters:
+             REMOTE:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: tmp/topo/scenario20_EDGE19.xml
+                diff: true
