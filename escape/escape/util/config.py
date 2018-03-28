@@ -492,18 +492,6 @@ class ESCAPEConfig(object):
   # SERVICE layer getters
   ##############################################################################
 
-  def get_service_layer_id (self):
-    """
-    Return with the identifications value of the Service Layer.
-
-    :return: service id
-    :rtype: str
-    """
-    try:
-      return self.__config[SERVICE]['SERVICE-LAYER-ID']
-    except KeyError:
-      return None
-
   def get_sas_request_delay (self):
     """
     Return the default delay value for service request parsing from file.

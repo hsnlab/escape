@@ -83,8 +83,6 @@ service:
         class: ProcessorSkipper
         # Enable/disable processing
         enabled: no
-    # Internal identification of Service layer
-    SERVICE-LAYER-ID: ESCAPE-SERVICE
     # Additional delay before mapping for services read from file
     SCHEDULED_SERVICE_REQUEST_DELAY: 3
 ################################################################################

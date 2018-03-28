@@ -56,7 +56,7 @@ class InstallNFFGEvent(Event):
     self.mapped_nffg = mapped_nffg
     self.original_request = original_request
     stats.add_measurement_end_entry(type=stats.TYPE_ORCHESTRATION,
-                                    info=LAYER_NAME)
+                                    info=LAYER_NAME + "-OK")
 
 
 class VirtResInfoEvent(Event):
@@ -529,6 +529,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
       elif not add_nffg.is_bare() and not del_nffg.is_bare():
         log.warning("Both ADD / DEL mode is not supported currently")
         self.__process_mapping_result(nffg_id=nffg.id, fail=True)
+        stats.add_measurement_end_entry(type=stats.TYPE_ORCHESTRATION,
+                                        info=LAYER_NAME + "-FAILED")
         self.raiseEventNoErrors(InstantiationFinishedEvent,
                                 id=nffg.id,
                                 result=InstantiationFinishedEvent.ABORTED)
@@ -539,6 +541,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
         self.log.debug("Invoked instantiation on %s is finished!"
                        % self.__class__.__name__)
         self.__process_mapping_result(nffg_id=nffg.id, fail=False)
+        stats.add_measurement_end_entry(type=stats.TYPE_ORCHESTRATION,
+                                        info=LAYER_NAME + "-SKIPPED")
         return
     else:
       log.debug("Mode: %s detected from config! Skip difference calculation..."
@@ -570,11 +574,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
         log.warning("Something went wrong in service request instantiation: "
                     "mapped service request is missing!")
         self.__process_mapping_result(nffg_id=nffg.id, fail=True)
+        stats.add_measurement_end_entry(type=stats.TYPE_ORCHESTRATION,
+                                        info=LAYER_NAME + "-FAILED")
         self.raiseEventNoErrors(InstantiationFinishedEvent,
                                 id=nffg.id,
                                 result=InstantiationFinishedEvent.MAPPING_ERROR)
     except ProcessorError as e:
       self.__process_mapping_result(nffg_id=nffg.id, fail=True)
+      stats.add_measurement_end_entry(type=stats.TYPE_ORCHESTRATION,
+                                      info=LAYER_NAME + "-DENIED")
       self.raiseEventNoErrors(InstantiationFinishedEvent,
                               id=nffg.id,
                               result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
@@ -679,8 +687,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
                    str(event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
     # Virtualizer type for Sl-Or API
-    virtualizer_type = CONFIG.get_api_virtualizer(layer=LAYER_NAME)
-    params = CONFIG.get_virtualizer_params(layer=LAYER_NAME)
+    virtualizer_type = CONFIG.get_api_virtualizer(layer=event.sid)
+    params = CONFIG.get_virtualizer_params(layer=event.sid)
     v = self.orchestrator.virtualizerManager.get_virtual_view(
       virtualizer_id=event.sid, type=virtualizer_type, **params)
     if v is None:
