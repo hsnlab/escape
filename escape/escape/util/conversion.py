@@ -287,13 +287,14 @@ class NFFGConverter(object):
         continue
       if op[0] == self.OP_TAG:
         # E.g.: <action>push_tag:0x0037</action>
+        vlan = int(op[1].split('|')[-1])
         try:
-          vlan = int(op[1].split('|')[-1])
+          vlan = int(vlan)
           ret.append("%s:%s" % (self.ACTION_PUSH_TAG, format(vlan, '#06x')))
         except ValueError:
           self.log.warning(
-            "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
-          continue
+            "Wrong VLAN format: %s! Using raw flowrule id: %s" % (op[1], vlan))
+        ret.append("%s:%s" % (self.ACTION_PUSH_TAG, vlan))
       elif op[0] == self.OP_UNTAG:
         # E.g.: <action>strip_vlan</action>
         ret.append(self.ACTION_POP_TAG)
