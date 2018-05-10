@@ -1,7 +1,7 @@
 ################################################################################
 # Dockerfile to build minimal ESCAPE MdO Container
 ################################################################################
-FROM python:2.7.14-alpine
+FROM python:2.7.15-alpine
 ARG GIT_REVISION=unknown
 LABEL git-revision=$GIT_REVISION    
 LABEL Maintainer="Janos Czentye <czentye@tmit.bme.hu>" \
