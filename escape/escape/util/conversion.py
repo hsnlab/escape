@@ -294,7 +294,7 @@ class NFFGConverter(object):
         except ValueError:
           self.log.warning(
             "Wrong VLAN format: %s! Using raw flowrule id: %s" % (op[1], vlan))
-        ret.append("%s:%s" % (self.ACTION_PUSH_TAG, vlan))
+          ret.append("%s:%s" % (self.ACTION_PUSH_TAG, vlan))
       elif op[0] == self.OP_UNTAG:
         # E.g.: <action>strip_vlan</action>
         ret.append(self.ACTION_POP_TAG)
