@@ -107,25 +107,13 @@ function install_core {
 
     sudo apt-get install -y software-properties-common
 
-    if [ "$DISTRIB_ID" = "Ubuntu" ]; then
-        if [ "$DISTRIB_RELEASE" = "14.04" ]; then
-            info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
-            sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
-        elif [ "$DISTRIB_RELEASE" = "16.04" ]; then
-            info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
-            sudo add-apt-repository -y ppa:jonathonf/python-2.7
-        else
-            warn "Unsupported Ubuntu version: $DISTRIB_RELEASE"
-        fi
-    fi
-
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install Python 2.7.13 explicitly
     sudo apt-get install -y python2.7 python-dev python-pip
 
     info "=== Install ESCAPEv2 Python dependencies ==="
-    sudo -H pip2.7 install --upgrade -r requirements.txt
+    sudo -H pip2 install --upgrade -r requirements.txt
 }
 
 function install_nfib_dep {
@@ -170,7 +158,7 @@ function install_nfib_dep {
                             libssl-dev libffi-dev
 
     # Install Python dependencies
-    sudo -H pip2.7 install --no-cache-dir Jinja2 py2neo ncclient cryptography==1.3.1
+    sudo -H pip2 install --no-cache-dir Jinja2 py2neo ncclient cryptography==1.3.1
 }
 
 function install_mn_dep {
@@ -322,7 +310,7 @@ function install_dev {
     info "==  Installing additional dependencies for development  =="
     info "=========================================================="
     sudo apt-get install -y graphviz texlive-latex-extra latexmk
-    sudo -H pip2.7 install sphinx
+    sudo -H pip2 install sphinx
     # Install test requirements
     . ${DIR}/test/install_requirements.sh
 }
@@ -334,7 +322,7 @@ function install_gui {
     info "==  Installing additional dependencies for internal GUI  =="
     info "==========================================================="
     sudo apt-get install -y python-tk
-    sudo -H pip2.7 install networkx_viewer
+    sudo -H pip2 install networkx_viewer
 }
 
 # Install all main component
