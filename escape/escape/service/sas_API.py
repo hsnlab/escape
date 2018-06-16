@@ -278,7 +278,6 @@ class ServiceLayerAPI(AbstractAPI):
       service_nffg.service_id = service_nffg.id
     service_nffg.id = id
     service_nffg.add_metadata(name="params", value=params)
-    print service_nffg.dump()
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
