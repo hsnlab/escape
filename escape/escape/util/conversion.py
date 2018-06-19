@@ -287,7 +287,7 @@ class NFFGConverter(object):
         continue
       if op[0] == self.OP_TAG:
         # E.g.: <action>push_tag:0x0037</action>
-        vlan = int(op[1].split('|')[-1])
+        vlan = op[1].split('|')[-1]
         try:
           vlan = int(vlan)
           ret.append("%s:%s" % (self.ACTION_PUSH_TAG, format(vlan, '#06x')))
