@@ -243,13 +243,13 @@ class NFFGConverter(object):
         self.log.warning("Unsupported match operand: %s" % op[0])
         continue
       if op[0] == self.OP_TAG:
+        vlan_tag = op[1].split('|')[-1]
         try:
-          vlan_tag = int(op[1].split('|')[-1])
+          vlan_tag = int(vlan_tag)
           ret.append("%s=%s" % (self.MATCH_TAG, format(vlan_tag, '#06x')))
         except ValueError:
-          self.log.warning(
-            "Wrong VLAN format: %s!" % op[1])
-          continue
+          # self.log.warning("Wrong VLAN format: %s!" % op[1])
+          ret.append("%s=%s" % (self.MATCH_TAG, vlan_tag))
           # elif op[0] == self.OP_SGHOP:
           #   ret.append(kv)
       elif op[0] == self.OP_FLOWCLASS:
@@ -292,8 +292,8 @@ class NFFGConverter(object):
           vlan = int(vlan)
           ret.append("%s:%s" % (self.ACTION_PUSH_TAG, format(vlan, '#06x')))
         except ValueError:
-          self.log.warning(
-            "Wrong VLAN format: %s! Using raw flowrule id: %s" % (op[1], vlan))
+          # self.log.warning(
+          # "Wrong VLAN format: %s! Using raw flowrule id: %s" % (op[1], vlan))
           ret.append("%s:%s" % (self.ACTION_PUSH_TAG, vlan))
       elif op[0] == self.OP_UNTAG:
         # E.g.: <action>strip_vlan</action>
