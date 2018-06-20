@@ -2044,19 +2044,19 @@ class GlobalResourceManager(object):
     """
     # If the domain is not tracked
     if domain not in self.__tracked_domains:
-      if not nffg:
-        log.warning("Got empty data. Skip domain addition...")
-        return
-      log.info("Append %s domain to DoV..." % domain)
-      # If DoV is empty
-      if not self.__dov.is_empty():
-        # Merge domain topo into global view
-        self.__dov.merge_new_domain_into_dov(nffg=nffg)
+      if nffg:
+        log.info("Append %s domain to DoV..." % domain)
+        # If DoV is empty
+        if not self.__dov.is_empty():
+          # Merge domain topo into global view
+          self.__dov.merge_new_domain_into_dov(nffg=nffg)
+        else:
+          # No other domain detected, set NFFG as the whole Global view
+          log.debug(
+            "DoV is empty! Add new domain: %s as the global view!" % domain)
+          self.__dov.set_domain_as_global_view(domain=domain, nffg=nffg)
       else:
-        # No other domain detected, set NFFG as the whole Global view
-        log.debug(
-          "DoV is empty! Add new domain: %s as the global view!" % domain)
-        self.__dov.set_domain_as_global_view(domain=domain, nffg=nffg)
+          log.warning("Got empty data. Add uninitialized domain...")
       # Add detected domain to cached domains
       self.__tracked_domains.add(domain)
       notify_remote_visualizer(data=self.__dov.get_resource_info(),
