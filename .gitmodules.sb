@@ -7,3 +7,6 @@
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = ssh://git@sb.tmit.bme.hu:42322/unify/virtualizer.git
+[submodule "slicer_bin"]
+	path = slicer_bin
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/slicer_bin.git
